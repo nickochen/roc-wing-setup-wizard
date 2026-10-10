@@ -142,6 +142,9 @@ label.f{display:block;font-size:12px;color:var(--dim);margin-bottom:6px;letter-s
   transform:translate(-50%,-50%);background:radial-gradient(circle at 35% 30%,#67e8f9,#0e7490);
   box-shadow:var(--glow-c);transition:all .5s}
 .stick .lbl{position:absolute;bottom:-24px;left:0;right:0;text-align:center;font-size:12px;color:var(--amber)}
+.aux-row{display:grid;grid-template-columns:64px 1fr 1.5fr;gap:10px;align-items:center;padding:9px 2px;border-bottom:1px solid var(--line)}
+.aux-row .lb{font-family:Consolas,monospace;font-weight:700;color:var(--cyan)}
+.aux-row .cur{font-size:12px;color:var(--dim)}
 .gimbals{display:flex;gap:36px;justify-content:center;padding:10px 0;flex-wrap:wrap}
 .gimbal{width:170px;height:170px;border-radius:14px;background:#0a1220;border:2px solid var(--line2);position:relative;flex:none}
 .gimbal .gl{position:absolute;top:6px;left:0;right:0;text-align:center;font-size:11px;color:var(--dim)}
@@ -644,7 +647,7 @@ ${('serial' in navigator)?'':warnBox('⚠️ 当前浏览器不支持 WebSerial�
 <table class="map"><tr><th>MISSION PLANNER</th><th>本向导对应步骤</th></tr>
 <tr><td class="mp">连接飞控（MAVLink 串口）</td><td class="wz">→ 本步一键连接</td></tr>
 <tr><td class="mp">初始设置 → 遥控器校准</td><td class="wz">→ 步骤 03（真实写入 RCn_MIN/MAX/TRIM）</td></tr>
-<tr><td class="mp">配置 → 飞行模式</td><td class="wz">→ 步骤 04（读写 FLTMODE_CH / FLTMODE1–6）</td></tr>
+<tr><td class="mp">配置 → 飞行模式</td><td class="wz">→ 步骤 04（读写 FLTMODE_CH / FLTMODE1–6 / RCx_OPTION）</td></tr>
 <tr><td class="mp">初始设置 → 电池监视器</td><td class="wz">→ 步骤 05（读写 BATT_CAPACITY）</td></tr>
 <tr><td class="mp">配置 → 全部参数表（空速计 / OSD）</td><td class="wz">→ 步骤 06、10（读写 ARSPD_* / MSP_OPTIONS）</td></tr>
 </table></div>`;
@@ -660,6 +663,7 @@ ${('serial' in navigator)?'':warnBox('⚠️ 当前浏览器不支持 WebSerial�
   <div class="kv"><span>电池电压</span><b>${FC.voltage.toFixed(1)} V</b></div>
   <div style="margin-top:14px;display:flex;gap:12px">
     <button class="btn btn-prev btn-sm" id="btnReboot">🔄 重启飞控</button>
+    <button class="btn btn-sm" id="btnPageDisc" style="border:1px solid var(--red);color:var(--red)">🔌 断开连接</button>
     <span class="note" style="margin:0">部分参数（如串口/OSD）需重启生效。</span>
   </div></div>
 <div class="card"><h3>飞控消息 <span style="font-size:11px;color:var(--dim2)">STATUSTEXT 实时</span></h3>
@@ -685,10 +689,12 @@ R[2]=()=>`
 <div class="card"><h3>当前飞控值</h3><div id="rcCur" class="grid4"></div>
 <p class="note">校准时不要碰微调。写入后建议重新上电验证。</p></div>`;
 
+const AUXOPT=[[0,"0: 无功能"],[4,"4: RTL 一键返航"],[9,"9: 相机快门"],[11,"11: 电子围栏开关"],[16,"16: AUTO 自动任务"],[22,"22: 降落伞释放"],[24,"24: Auto Mission Reset"],[27,"27: Retract Mount1"],[28,"28: Relay1 On/Off"],[29,"29: 起落架收放"],[30,"30: Lost Plane Sound"],[31,"31: 电机急停"],[34,"34: Relay2 On/Off"],[35,"35: Relay3 On/Off"],[36,"36: Relay4 On/Off"],[38,"38: ADSB Avoidance Enable"],[41,"41: ArmDisarm (4.1 and lower)"],[43,"43: InvertedFlight Enable"],[46,"46: RC Override Enable"],[51,"51: MANUAL 手动"],[52,"52: ACRO Mode"],[55,"55: GUIDED 引导"],[56,"56: LOITER 盘旋"],[58,"58: Clear Waypoints"],[62,"62: Compass Learn"],[64,"64: Reverse Throttle"],[65,"65: GPS Disable"],[66,"66: Relay5 On/Off"],[67,"67: Relay6 On/Off"],[72,"72: CIRCLE 绕圈"],[77,"77: TAKEOFF 起飞"],[78,"78: RunCam Control"],[79,"79: RunCam OSD Control"],[81,"81: 上锁"],[82,"82: QAssist 3pos"],[84,"84: AirMode"],[85,"85: Generator"],[86,"86: Non Auto Terrain Follow Disable"],[87,"87: Crow Select"],[88,"88: Soaring Enable"],[89,"89: Landing Flare"],[90,"90: EKF Source Set"],[91,"91: Airspeed Ratio Calibration"],[92,"92: FBWA"],[94,"94: 图传功率切换"],[95,"95: FBWA taildragger takeoff mode"],[96,"96: Trigger re-reading of mode switch"],[98,"98: TRAINING 教练"],[100,"100: KillIMU1"],[101,"101: KillIMU2"],[102,"102: Camera Mode Toggle"],[103,"103: EKF lane switch attempt"],[104,"104: EKF yaw reset"],[105,"105: GPS Disable Yaw"],[106,"106: 禁用空速使用"],[107,"107: Enable FW Autotune"],[108,"108: QRTL"],[109,"109: use Custom Controller"],[110,"110: KillIMU3"],[111,"111: Loweheiser starter"],[112,"112: SwitchExternalAHRS"],[113,"113: Retract Mount2"],[150,"150: CRUISE 巡航"],[153,"153: 解锁/上锁开关"],[154,"154: ArmDisarm with Quadplane AirMode (4.2 and higher)"],[155,"155: Set roll pitch and yaw trim to current servo and RC"],[157,"157: Force FS Action to FBWA"],[158,"158: Optflow Calibration"],[160,"160: Weathervane Enable"],[162,"162: FFT Tune"],[163,"163: Mount Yaw Lock"],[164,"164: Pause Stream Logging"],[165,"165: 解锁/电机急停"],[166,"166: 相机录像"],[167,"167: Camera Zoom"],[168,"168: Camera Manual Focus"],[169,"169: Camera Auto Focus"],[170,"170: QSTABILIZE"],[171,"171: Calibrate Compasses"],[172,"172: Battery MPPT Enable"],[173,"173: Plane AUTO Mode Landing Abort"],[174,"174: Camera Image Tracking"],[175,"175: Camera Lens"],[176,"176: Quadplane Fwd Throttle Override enable"],[177,"177: Mount LRF enable"],[179,"179: ICEngine start / stop"],[180,"180: Test autotuned gains after tune is complete"],[181,"181: QuickTune"],[183,"183: AUTOLAND 自动着陆"],[184,"184: System ID Chirp"],[185,"185: Mount Roll/Pitch Lock"],[186,"186: Mount POI Lock"],[187,"187: EKF Reset"],[208,"208: Flap"],[209,"209: VTOL 前飞油门"],[210,"210: Airbrakes"],[212,"212: Mount1 Roll"],[213,"213: Mount1 Pitch"],[214,"214: Mount1 Yaw"],[215,"215: Mount2 Roll"],[216,"216: Mount2 Pitch"],[217,"217: Mount2 Yaw"],[218,"218: Loweheiser throttle"],[300,"300: Scripting1"],[301,"301: Scripting2"],[302,"302: Scripting3"],[303,"303: Scripting4"],[304,"304: Scripting5"],[305,"305: Scripting6"],[306,"306: Scripting7"],[307,"307: Scripting8"],[308,"308: Scripting9"],[309,"309: Scripting10"],[310,"310: Scripting11"],[311,"311: Scripting12"],[312,"312: Scripting13"],[313,"313: Scripting14"],[314,"314: Scripting15"],[315,"315: Scripting16"],[316,"316: Stop-Restart Scripting"]];
+const auxName=v=>{ const f=AUXOPT.find(x=>x[0]===v); return f?f[1]:("值 "+v); };
 /* ---- 3 飞行模式 ---- */
 R[3]=()=>`
 <div class="step-hero"><div class="step-no">04</div><div><h2>飞行模式设置 <span class="ref">说明书 P7–8</span></h2>
-<p>先选择<b style="color:var(--cyan)">模式开关通道</b>（默认 CH6，可选 RC5–RC16），再设置各档位的飞行模式。建议三档：<b>QLOITER → CRUISE → RTL</b>，写入 <b style="color:var(--cyan)">FLTMODE_CH / FLTMODE1–6</b>。</p></div></div>
+<p>先选择<b style="color:var(--cyan)">模式开关通道</b>（默认 CH6，可选 RC5–RC16），再设置各档位的飞行模式。建议三档：<b>QLOITER → CRUISE → RTL</b>，写入 <b style="color:var(--cyan)">FLTMODE_CH / FLTMODE1–6</b>；下方还可为每个辅助通道指定开关功能。</p></div></div>
 ${warnBox('⚠️ <b>模式开关通道不要配置给其他功能</b>（如云台、蜂鸣器开关）。',true)}
 <div class="card"><h3>模式开关通道</h3>
 <div class="grid2">
@@ -700,7 +706,11 @@ ${warnBox('⚠️ <b>模式开关通道不要配置给其他功能</b>（如云�
 <div style="margin-top:14px;display:flex;gap:12px;align-items:center">
 <button class="btn btn-next btn-sm" id="btnFmWrite">💾 写入飞控</button>
 <span id="fmMsg" style="font-size:13px;color:var(--dim)"></span></div>
-<p class="note">上电默认模式 = FLTMODE1（PWM 最低档）。新手请保持 QLOITER / CRUISE / RTL 组合。</p></div>`;
+<p class="note">上电默认模式 = FLTMODE1（PWM 最低档）。新手请保持 QLOITER / CRUISE / RTL 组合。</p></div>
+<div class="card"><h3>辅助通道功能 <span style="font-size:11px;color:var(--dim2)">RCx_OPTION · 类似 MP 用户参数页</span></h3>
+<p class="note">为每个辅助通道选择开关功能（模式开关通道除外）。下拉为 ArduPilot 官方全部功能定义。</p>
+<div id="auxTable"></div>
+<p class="note">写入时只更新有改动的值。</p></div>`;
 
 /* ---- 4 电池 ---- */
 R[4]=()=>`
@@ -929,6 +939,7 @@ function bindStep(i){
       const paint=()=>{ log.innerHTML=FC.msgs.map(m=>`<div class="${m.sev<=3?'err':m.sev===4?'warn':'ok'}">[${new Date(m.t).toLocaleTimeString()}] ${String(m.text).replace(/</g,'&lt;')}</div>`).join(''); log.scrollTop=log.scrollHeight; };
       paint(); onFc('msg',paint);
       $('btnReboot').onclick=()=>{ if(confirm('确定重启飞控吗？部分参数（如串口/OSD）需重启生效。')) FC.reboot(); };
+      $('btnPageDisc').onclick=async()=>{ await FC.disconnect(); refreshTop(); render(); };
     }
   }
 
@@ -979,6 +990,18 @@ function bindStep(i){
     const curCh=pvi('FLTMODE_CH');
     $('fmCh').textContent = curCh===undefined?'读取失败':'CH'+curCh;
     $('fmChSel').value = curCh===undefined?6:curCh;
+    const renderAux=()=>{
+      const mch=+$('fmChSel').value, rows=[];
+      for(let ch=5;ch<=16;ch++){
+        if(ch===mch) continue;
+        const cv=pvi('RC'+ch+'_OPTION');
+        rows.push(`<div class="aux-row"><div class="lb">RC${ch}</div>`
+          +`<div class="cur">当前：<b>${cv===undefined?'读取失败':auxName(cv)}</b></div>`
+          +`<select class="inp" data-aux="${ch}">${AUXOPT.map(([v,l])=>`<option value="${v}" ${v===(cv??0)?'selected':''}>${l}</option>`).join('')}</select></div>`);
+      }
+      $('auxTable').innerHTML=rows.join('')||'<p class="note">无辅助通道可选</p>';
+    };
+    $('fmChSel').onchange=renderAux; renderAux();
     const cur=[]; for(let n=1;n<=6;n++) cur[n]=pvi('FLTMODE'+n);
     $('fmGrid').innerHTML=[1,2,3,4,5,6].map(n=>`
       <div><label class="f">FLTMODE${n}（第${n}档）· 当前 ${modeName(cur[n])}</label>
@@ -988,9 +1011,15 @@ function bindStep(i){
       try{
         await FC.setParam('FLTMODE_CH', +$('fmChSel').value);
         for(let n=1;n<=6;n++) await FC.setParam('FLTMODE'+n, +document.querySelector(`[data-fm="${n}"]`).value);
+        let auxN=0;
+        for(const sel of document.querySelectorAll('[data-aux]')){
+          const ch=sel.dataset.aux, v=+sel.value, cv=pvi('RC'+ch+'_OPTION');
+          if(cv!==undefined&&v!==cv){ await FC.setParam('RC'+ch+'_OPTION',v); auxN++; }
+        }
         S.modesDone=true;
-        $('fmMsg').innerHTML='<span style="color:var(--green)">✓ 已写入 FLTMODE_CH + FLTMODE1–6</span>';
+        $('fmMsg').innerHTML=`<span style="color:var(--green)">✓ 已写入 FLTMODE_CH + FLTMODE1–6${auxN?` + ${auxN} 个辅助通道功能`:''}</span>`;
         $('btnNext').disabled=false; $('navHint').textContent='';
+        renderAux();
       }catch(e){ $('fmMsg').innerHTML=`<span style="color:var(--red)">⚠️ ${String(e.message).replace(/</g,'&lt;')}</span>`; $('btnFmWrite').disabled=false; }
     };
   }
