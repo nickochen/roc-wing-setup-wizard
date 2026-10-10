@@ -581,9 +581,9 @@ const STEPS = [
   {t:'开箱与接线检查', s:'ELRS / 图传 / 云台接线', ref:'P2–4'},
   {t:'连接飞控', s:'USB 直连 · 下载参数', ref:'P5'},
   {t:'遥控器校准', s:'16 通道行程校准', ref:'P6'},
-  {t:'飞行模式设置', s:'CH6 三档开关', ref:'P7–8'},
-  {t:'电池设置', s:'容量与电压确认', ref:'P9'},
   {t:'空速计设置', s:'机头罩类型 · 缩放系数', ref:'P12–13'},
+  {t:'电池设置', s:'容量与电压确认', ref:'P9'},
+  {t:'飞行模式设置', s:'CH6 三档开关', ref:'P7–8'},
   {t:'解锁上锁练习与模式确认', s:'手势练习 · 模式语音确认', ref:'P14–16'},
   {t:'飞行模式学习', s:'QLOITER / CRUISE / FBWA / RTL', ref:'P17–21 · 26'},
   {t:'遥控器操控说明', s:'VTOL 与固定翼杆量', ref:'P22–25'},
@@ -600,9 +600,9 @@ const canNext = [
   ()=>true,
   ()=>FC.connected && FC.paramsDone,
   ()=>S.calibrated,
-  ()=>S.modesDone,
-  ()=>S.battDone,
   ()=>S.arspdDone,
+  ()=>S.battDone,
+  ()=>S.modesDone,
   ()=>S.armOk&&S.modeOk,
   ()=>S.modeRead,
   ()=>true,
@@ -611,8 +611,8 @@ const canNext = [
 ];
 const HINTS = [
   '','请先连接飞控并等待参数下载完成','请完成遥控器校准（或跳过）',
-  '请写入飞行模式（或跳过）','请写入电池容量（或跳过）',
-  '请选择机头罩类型并写入（或跳过）','请完成解锁/上锁练习并确认飞行模式设置',
+  '请选择机头罩类型并写入（或跳过）','请写入电池容量（或跳过）',
+  '请写入飞行模式（或跳过）','请完成解锁/上锁练习并确认飞行模式设置',
   '请阅读各模式说明','了解杆量差异后继续','请选择图传类型并写入（或跳过）','全部勾选后即可放飞 🎉',
 ];
 const warnBox=(h,amber)=>`<div class="warn-strip${amber?' amber':''}">${h}</div>`;
@@ -696,47 +696,9 @@ R[2]=()=>`
 
 const AUXOPT=[[0,"0: 无功能"],[4,"4: RTL 一键返航"],[9,"9: 相机快门"],[11,"11: 电子围栏开关"],[16,"16: AUTO 自动任务"],[22,"22: 降落伞释放"],[24,"24: Auto Mission Reset"],[27,"27: Retract Mount1"],[28,"28: Relay1 On/Off"],[29,"29: 起落架收放"],[30,"30: Lost Plane Sound"],[31,"31: 电机急停"],[34,"34: Relay2 On/Off"],[35,"35: Relay3 On/Off"],[36,"36: Relay4 On/Off"],[38,"38: ADSB Avoidance Enable"],[41,"41: ArmDisarm (4.1 and lower)"],[43,"43: InvertedFlight Enable"],[46,"46: RC Override Enable"],[51,"51: MANUAL 手动"],[52,"52: ACRO Mode"],[55,"55: GUIDED 引导"],[56,"56: LOITER 盘旋"],[58,"58: Clear Waypoints"],[62,"62: Compass Learn"],[64,"64: Reverse Throttle"],[65,"65: GPS Disable"],[66,"66: Relay5 On/Off"],[67,"67: Relay6 On/Off"],[72,"72: CIRCLE 绕圈"],[77,"77: TAKEOFF 起飞"],[78,"78: RunCam Control"],[79,"79: RunCam OSD Control"],[81,"81: 上锁"],[82,"82: QAssist 3pos"],[84,"84: AirMode"],[85,"85: Generator"],[86,"86: Non Auto Terrain Follow Disable"],[87,"87: Crow Select"],[88,"88: Soaring Enable"],[89,"89: Landing Flare"],[90,"90: EKF Source Set"],[91,"91: Airspeed Ratio Calibration"],[92,"92: FBWA"],[94,"94: 图传功率切换"],[95,"95: FBWA taildragger takeoff mode"],[96,"96: Trigger re-reading of mode switch"],[98,"98: TRAINING 教练"],[100,"100: KillIMU1"],[101,"101: KillIMU2"],[102,"102: Camera Mode Toggle"],[103,"103: EKF lane switch attempt"],[104,"104: EKF yaw reset"],[105,"105: GPS Disable Yaw"],[106,"106: 禁用空速使用"],[107,"107: Enable FW Autotune"],[108,"108: QRTL"],[109,"109: use Custom Controller"],[110,"110: KillIMU3"],[111,"111: Loweheiser starter"],[112,"112: SwitchExternalAHRS"],[113,"113: Retract Mount2"],[150,"150: CRUISE 巡航"],[153,"153: 解锁/上锁开关"],[154,"154: ArmDisarm with Quadplane AirMode (4.2 and higher)"],[155,"155: Set roll pitch and yaw trim to current servo and RC"],[157,"157: Force FS Action to FBWA"],[158,"158: Optflow Calibration"],[160,"160: Weathervane Enable"],[162,"162: FFT Tune"],[163,"163: Mount Yaw Lock"],[164,"164: Pause Stream Logging"],[165,"165: 解锁/电机急停"],[166,"166: 相机录像"],[167,"167: Camera Zoom"],[168,"168: Camera Manual Focus"],[169,"169: Camera Auto Focus"],[170,"170: QSTABILIZE"],[171,"171: Calibrate Compasses"],[172,"172: Battery MPPT Enable"],[173,"173: Plane AUTO Mode Landing Abort"],[174,"174: Camera Image Tracking"],[175,"175: Camera Lens"],[176,"176: Quadplane Fwd Throttle Override enable"],[177,"177: Mount LRF enable"],[179,"179: ICEngine start / stop"],[180,"180: Test autotuned gains after tune is complete"],[181,"181: QuickTune"],[183,"183: AUTOLAND 自动着陆"],[184,"184: System ID Chirp"],[185,"185: Mount Roll/Pitch Lock"],[186,"186: Mount POI Lock"],[187,"187: EKF Reset"],[208,"208: Flap"],[209,"209: VTOL 前飞油门"],[210,"210: Airbrakes"],[212,"212: Mount1 Roll"],[213,"213: Mount1 Pitch"],[214,"214: Mount1 Yaw"],[215,"215: Mount2 Roll"],[216,"216: Mount2 Pitch"],[217,"217: Mount2 Yaw"],[218,"218: Loweheiser throttle"],[300,"300: Scripting1"],[301,"301: Scripting2"],[302,"302: Scripting3"],[303,"303: Scripting4"],[304,"304: Scripting5"],[305,"305: Scripting6"],[306,"306: Scripting7"],[307,"307: Scripting8"],[308,"308: Scripting9"],[309,"309: Scripting10"],[310,"310: Scripting11"],[311,"311: Scripting12"],[312,"312: Scripting13"],[313,"313: Scripting14"],[314,"314: Scripting15"],[315,"315: Scripting16"],[316,"316: Stop-Restart Scripting"]];
 const auxName=v=>{ const f=AUXOPT.find(x=>x[0]===v); return f?f[1]:("值 "+v); };
-/* ---- 3 飞行模式 ---- */
-R[3]=()=>`
-<div class="step-hero"><div class="step-no">04</div><div><h2>飞行模式设置 <span class="ref">说明书 P7–8</span></h2>
-<p>先选择<b style="color:var(--cyan)">模式开关通道</b>（默认 CH6，可选 RC5–RC16），再设置各档位的飞行模式。建议三档：<b>QLOITER → CRUISE → RTL</b>，写入 <b style="color:var(--cyan)">FLTMODE_CH / FLTMODE1–6</b>；下方还可为每个辅助通道指定开关功能。</p></div></div>
-${warnBox('⚠️ <b>模式开关通道不要配置给其他功能</b>（如云台、蜂鸣器开关）。',true)}
-<div class="card"><h3>模式开关通道</h3>
-<div class="grid2">
-<div><label class="f">FLTMODE_CH · 当前 <b id="fmCh" style="color:var(--cyan)">读取中…</b></label>
-<select class="inp" id="fmChSel">${[5,6,7,8,9,10,11,12,13,14,15,16].map(n=>`<option value="${n}">RC${n}</option>`).join('')}</select></div>
-<div><p class="note" style="margin-top:24px">选择遥控器上三档开关所在的通道，写入后立即生效。</p></div>
-</div></div>
-<div class="card"><h3>六档模式映射</h3><div class="grid3" id="fmGrid"></div>
-<div style="margin-top:14px;display:flex;gap:12px;align-items:center">
-<button class="btn btn-next btn-sm" id="btnFmWrite">💾 写入飞控</button>
-<span id="fmMsg" style="font-size:13px;color:var(--dim)"></span></div>
-<p class="note">上电默认模式 = FLTMODE1（PWM 最低档）。新手请保持 QLOITER / CRUISE / RTL 组合。</p></div>
-<div class="card"><h3>辅助通道功能 <span style="font-size:11px;color:var(--dim2)">RCx_OPTION · 类似 MP 用户参数页</span></h3>
-<p class="note">为每个辅助通道选择开关功能（模式开关通道除外）。下拉为 ArduPilot 官方全部功能定义。</p>
-<div id="auxTable"></div>
-<p class="note">写入时只更新有改动的值。</p></div>`;
-
-/* ---- 4 电池 ---- */
-R[4]=()=>`
-<div class="step-hero"><div class="step-no">05</div><div><h2>电池设置 <span class="ref">说明书 P9</span></h2>
-<p>按电池实际容量填入，写入 <b style="color:var(--cyan)">BATT_CAPACITY</b>，飞控据此计算剩余电量与低电量告警。</p></div></div>
-${warnBox('⚠️ 动力电池<b>必须使用 6S 软包锂聚合物电池</b>，<b>禁用 18650 电芯</b>（放电能力不足，有断电风险）。')}
-<div class="card"><h3>电池容量</h3>
-<div class="grid2">
-<div><label class="f">BATT_CAPACITY（mAh）· 当前 <b id="battCur" style="color:var(--cyan)">–</b></label>
-<input class="inp" id="battInp" type="number" min="1000" max="30000" step="100"></div>
-<div><label class="f">实时电压（SYS_STATUS）</label>
-<div class="tile"><div class="v" id="voltTile">–</div><div class="k">V</div></div></div>
-</div>
-<div style="margin-top:14px;display:flex;gap:12px;align-items:center">
-<button class="btn btn-next btn-sm" id="btnBattWrite">💾 写入飞控</button>
-<span id="battMsg" style="font-size:13px;color:var(--dim)"></span></div></div>`;
-
-
-/* ---- 5 空速计 ---- */
+/* ---- 3 空速计 ---- */
 R[5]=()=>`
-<div class="step-hero"><div class="step-no">06</div><div><h2>空速计设置 <span class="ref">说明书 P12–13</span></h2>
+<div class="step-hero"><div class="step-no">04</div><div><h2>空速计设置 <span class="ref">说明书 P12–13</span></h2>
 <p>根据机头罩类型选择，写入 <b style="color:var(--cyan)">ARSPD_RATIO / ARSPD_TYPE</b>。选错会导致空速读数不准，影响 CRUISE 油门控制。</p></div></div>
 <div class="card"><h3>当前值</h3>
 <div class="kv"><span>ARSPD_TYPE（0=禁用）</span><b id="arspdTypeCur">–</b></div>
@@ -759,6 +721,44 @@ ${warnBox('⚠️ 请在<b>无风环境</b>下校准（室内或完全无风的�
 <div style="margin-top:14px;display:flex;gap:12px;align-items:center">
 <button class="btn btn-next btn-sm" id="btnArspd">💾 写入飞控</button>
 <span id="arspdMsg" style="font-size:13px;color:var(--dim)"></span></div></div>`;
+/* ---- 4 电池 ---- */
+R[4]=()=>`
+<div class="step-hero"><div class="step-no">05</div><div><h2>电池设置 <span class="ref">说明书 P9</span></h2>
+<p>按电池实际容量填入，写入 <b style="color:var(--cyan)">BATT_CAPACITY</b>，飞控据此计算剩余电量与低电量告警。</p></div></div>
+${warnBox('⚠️ 动力电池<b>必须使用 6S 软包锂聚合物电池</b>，<b>禁用 18650 电芯</b>（放电能力不足，有断电风险）。')}
+<div class="card"><h3>电池容量</h3>
+<div class="grid2">
+<div><label class="f">BATT_CAPACITY（mAh）· 当前 <b id="battCur" style="color:var(--cyan)">–</b></label>
+<input class="inp" id="battInp" type="number" min="1000" max="30000" step="100"></div>
+<div><label class="f">实时电压（SYS_STATUS）</label>
+<div class="tile"><div class="v" id="voltTile">–</div><div class="k">V</div></div></div>
+</div>
+<div style="margin-top:14px;display:flex;gap:12px;align-items:center">
+<button class="btn btn-next btn-sm" id="btnBattWrite">💾 写入飞控</button>
+<span id="battMsg" style="font-size:13px;color:var(--dim)"></span></div></div>`;
+
+
+/* ---- 5 飞行模式 ---- */
+R[3]=()=>`
+<div class="step-hero"><div class="step-no">06</div><div><h2>飞行模式设置 <span class="ref">说明书 P7–8</span></h2>
+<p>先选择<b style="color:var(--cyan)">模式开关通道</b>（默认 CH6，可选 RC5–RC16），再设置各档位的飞行模式。建议三档：<b>QLOITER → CRUISE → RTL</b>，写入 <b style="color:var(--cyan)">FLTMODE_CH / FLTMODE1–6</b>；下方还可为每个辅助通道指定开关功能。</p></div></div>
+${warnBox('⚠️ <b>模式开关通道不要配置给其他功能</b>（如云台、蜂鸣器开关）。',true)}
+<div class="card"><h3>模式开关通道</h3>
+<div class="grid2">
+<div><label class="f">FLTMODE_CH · 当前 <b id="fmCh" style="color:var(--cyan)">读取中…</b></label>
+<select class="inp" id="fmChSel">${[5,6,7,8,9,10,11,12,13,14,15,16].map(n=>`<option value="${n}">RC${n}</option>`).join('')}</select></div>
+<div><p class="note" style="margin-top:24px">选择遥控器上三档开关所在的通道，写入后立即生效。</p></div>
+</div></div>
+<div class="card"><h3>六档模式映射</h3><div class="grid3" id="fmGrid"></div>
+<div style="margin-top:14px;display:flex;gap:12px;align-items:center">
+<button class="btn btn-next btn-sm" id="btnFmWrite">💾 写入飞控</button>
+<span id="fmMsg" style="font-size:13px;color:var(--dim)"></span></div>
+<p class="note">上电默认模式 = FLTMODE1（PWM 最低档）。新手请保持 QLOITER / CRUISE / RTL 组合。</p></div>
+<div class="card"><h3>辅助通道功能 <span style="font-size:11px;color:var(--dim2)">RCx_OPTION · 类似 MP 用户参数页</span></h3>
+<p class="note">为每个辅助通道选择开关功能（模式开关通道除外）。下拉为 ArduPilot 官方全部功能定义。</p>
+<div id="auxTable"></div>
+<p class="note">写入时只更新有改动的值。</p></div>`;
+
 /* ---- 6 解锁上锁练习与模式确认 ---- */
 R[6]=()=>`
 <div class="step-hero"><div class="step-no">07</div><div><h2>解锁上锁练习与飞行模式确认 <span class="ref">说明书 P14–16</span></h2>
@@ -993,7 +993,7 @@ function bindStep(i){
     };
   }
 
-  if(i===3){
+  if(i===5){
     const curCh=pvi('FLTMODE_CH');
     $('fmCh').textContent = curCh===undefined?'读取失败':'CH'+curCh;
     $('fmChSel').value = curCh===undefined?6:curCh;
@@ -1049,7 +1049,7 @@ function bindStep(i){
     };
   }
 
-  if(i===5){
+  if(i===3){
     $('arspdTypeCur').textContent=pvi('ARSPD_TYPE')??'–';
     const r=pv('ARSPD_RATIO'); $('arspdRatioCur').textContent=r===undefined?'–':r.toFixed(2);
     let nose='std';
@@ -1203,7 +1203,7 @@ function bindStep(i){
     }
     $('auxConfTbl').innerHTML='<table class="map"><tr><th>通道</th><th>参数</th><th>功能</th></tr>'+arows+'</table>';
     const dups=Object.keys(seen).filter(k=>seen[k]>1);
-    $('modeWarn').innerHTML=(errN?'<div class="warn-strip">⚠️ 发现 <b style="color:var(--red)">'+errN+' 项错误</b>配置，请回第 4 步修改后再继续。</div>':'')
+    $('modeWarn').innerHTML=(errN?'<div class="warn-strip">⚠️ 发现 <b style="color:var(--red)">'+errN+' 项错误</b>配置，请回第 6 步修改后再继续。</div>':'')
       +(!hasQ&&qEn?'<p class="note">建议至少配置一个 QLOITER，用于垂直起降。</p>':'')
       +(dups.length?'<p class="note">存在重复配置的模式档位。</p>':'');
     $('btnModeOk').onclick=()=>{ S.modeOk=true; $('btnModeOk').disabled=true;
