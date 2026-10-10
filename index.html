@@ -180,6 +180,11 @@ table.map td.mp{color:var(--dim)} table.map td.wz{color:var(--cyan)}
 @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .spin{display:inline-block;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+.mode-live{text-align:center;padding:16px 10px;border:1px solid var(--line);border-radius:12px;background:#0b1526}
+.ml-mode{font-size:34px;font-weight:800;letter-spacing:3px;font-family:Consolas,monospace}
+.ml-mode.q{color:var(--cyan)}.ml-mode.r{color:var(--red)}.ml-mode.c{color:var(--green)}.ml-mode.f{color:var(--amber)}.ml-mode.n{color:var(--text)}
+.ml-cn{font-size:15px;color:var(--dim);margin-top:6px}
+.ml-sub{font-size:12px;color:var(--dim2);margin-top:8px;font-family:Consolas,monospace}
 </style>
 </head>
 <body>
@@ -569,7 +574,7 @@ onMsg(77,(p)=>{                   /* COMMAND_ACK：command u16, result u8 */
 });
 /* ================= 向导 UI ================= */
 const S = { step:0, done:new Set(), calibrated:false, modesDone:false,
-  battDone:false, arspdDone:false, preheatOk:false, armOk:false,
+  battDone:false, arspdDone:false, armOk:false, modeOk:false,
   modeRead:false, vtxDone:false };
 const TOTAL = 11;
 const STEPS = [
@@ -579,7 +584,7 @@ const STEPS = [
   {t:'飞行模式设置', s:'CH6 三档开关', ref:'P7–8'},
   {t:'电池设置', s:'容量与电压确认', ref:'P9'},
   {t:'空速计设置', s:'机头罩类型 · 缩放系数', ref:'P12–13'},
-  {t:'上电预热与解锁', s:'预热 · 解锁手势教学', ref:'P14–16'},
+  {t:'解锁上锁练习与模式确认', s:'手势练习 · 模式语音确认', ref:'P14–16'},
   {t:'飞行模式学习', s:'QLOITER / CRUISE / FBWA / RTL', ref:'P17–21 · 26'},
   {t:'遥控器操控说明', s:'VTOL 与固定翼杆量', ref:'P22–25'},
   {t:'图传与云台', s:'OSD · DJI / C20-T', ref:'P27–33'},
@@ -598,7 +603,7 @@ const canNext = [
   ()=>S.modesDone,
   ()=>S.battDone,
   ()=>S.arspdDone,
-  ()=>S.preheatOk&&S.armOk,
+  ()=>S.armOk&&S.modeOk,
   ()=>S.modeRead,
   ()=>true,
   ()=>S.vtxDone,
@@ -607,7 +612,7 @@ const canNext = [
 const HINTS = [
   '','请先连接飞控并等待参数下载完成','请完成遥控器校准（或跳过）',
   '请写入飞行模式（或跳过）','请写入电池容量（或跳过）',
-  '请选择机头罩类型并写入（或跳过）','请完成预热确认与解锁手势',
+  '请选择机头罩类型并写入（或跳过）','请完成解锁/上锁练习并确认飞行模式设置',
   '请阅读各模式说明','了解杆量差异后继续','请选择图传类型并写入（或跳过）','全部勾选后即可放飞 🎉',
 ];
 const warnBox=(h,amber)=>`<div class="warn-strip${amber?' amber':''}">${h}</div>`;
@@ -754,24 +759,18 @@ ${warnBox('⚠️ 请在<b>无风环境</b>下校准（室内或完全无风的�
 <div style="margin-top:14px;display:flex;gap:12px;align-items:center">
 <button class="btn btn-next btn-sm" id="btnArspd">💾 写入飞控</button>
 <span id="arspdMsg" style="font-size:13px;color:var(--dim)"></span></div></div>`;
-/* ---- 6 上电预热与解锁 ---- */
+/* ---- 6 解锁上锁练习与模式确认 ---- */
 R[6]=()=>`
-<div class="step-hero"><div class="step-no">07</div><div><h2>上电预热与解锁教学 <span class="ref">说明书 P14–16</span></h2>
-<p>接通电源后飞控初始化约 1 分钟，<b style="color:var(--red)">期间不要移动飞机</b>。预热完成后，在地面练习遥控器解锁 / 上锁手势（<b style="color:var(--red)">确认桨叶安全</b>）。</p></div></div>
-<div class="card"><h3>EKF 状态（实时）</h3>
-<div class="grid4">
-<div class="tile"><div class="v" id="ekfVv">–</div><div class="k">速度方差</div></div>
-<div class="tile"><div class="v" id="ekfPh">–</div><div class="k">水平位置方差</div></div>
-<div class="tile"><div class="v" id="ekfPv">–</div><div class="k">垂直位置方差</div></div>
-<div class="tile"><div class="v" id="ekfCv">–</div><div class="k">罗盘方差</div></div>
-</div><p class="note">方差持续下降并稳定在小数值，说明初始化正常。</p></div>
-<div class="card" style="text-align:center"><h3 style="justify-content:center">尾灯确认</h3>
-<div class="tail-light orange" id="tailLight"></div>
-<div style="font-size:15px;margin:10px 0;color:var(--amber)">已等待 <b id="preT" style="font-family:Consolas,monospace">0</b> 秒 · 建议等待约 60 秒</div>
-<button class="btn btn-next btn-sm" id="btnPreOk">🟢 尾灯已变绿，确认完成</button>
-<p class="note">预热完成前请勿解锁。</p></div>
-<div class="card"><h3>解锁手势教学 <span style="font-size:11px;color:var(--dim2)">Mode 2 · 左手油门</span></h3>
-<p class="note">左摇杆：<b>油门 CH3</b>（上下）+ <b>方向 CH4</b>（左右）；右摇杆：俯仰 CH2 + 横滚 CH1（本页不用动）。俯仰显示已按 ArduPilot 规范反向（遥控器 CH2 需设反转，如上图 ⇄）。<b style="color:var(--green)">解锁：</b>油门最低 + 方向<b>右打</b>保持 2 秒；<b style="color:var(--amber)">上锁：</b>油门最低 + 方向<b>左打</b>保持 2 秒。</p>
+<div class="step-hero"><div class="step-no">07</div><div><h2>解锁上锁练习与飞行模式确认 <span class="ref">说明书 P14–16</span></h2>
+<p>接通电源后飞控初始化约 1 分钟，<b style="color:var(--red)">期间不要移动飞机</b>。在地面练熟<b style="color:var(--green)">解锁 / 上锁</b>手势（<b style="color:var(--red)">确认桨叶安全</b>），并默记你的飞行模式与辅助通道默认值。</p></div></div>
+<div class="card"><h3>当前飞行模式 <span style="font-size:11px;color:var(--dim2)">实时</span></h3>
+<div class="mode-live"><div class="ml-mode n" id="mlMode">–</div><div class="ml-cn" id="mlModeCn">等待飞控数据…</div><div class="ml-sub"><span id="mlSlot">档位 –</span> · <span id="mlArm">–</span></div></div>
+<div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+<button class="btn btn-prev btn-sm" id="btnVoice">🔊 语音播报：开</button>
+<button class="btn btn-prev btn-sm" id="btnVoiceTest">▶ 试听</button>
+<span style="font-size:12px;color:var(--dim2)">拨动模式开关，自动语音播报中文模式名</span></div></div>
+<div class="card"><h3>解锁 / 上锁练习 <span style="font-size:11px;color:var(--dim2)">Mode 2 · 左手油门</span></h3>
+<p class="note">左摇杆：<b>油门 CH3</b>（上下）+ <b>方向 CH4</b>（左右）；右摇杆：俯仰 CH2 + 横滚 CH1（本页不用动）。俯仰显示已按 ArduPilot 规范反向（遥控器 CH2 需设反转）。<b style="color:var(--green)">解锁：</b>油门最低 + 方向<b>右打</b>保持 2 秒；<b style="color:var(--amber)">上锁：</b>油门最低 + 方向<b>左打</b>保持 2 秒。</p>
 <div class="gimbals">
 <div class="gimbal"><div class="gl">左摇杆 · 油门/方向</div>
 <div class="cross" style="left:50%;top:8%;bottom:8%;width:1px"></div>
@@ -786,16 +785,28 @@ R[6]=()=>`
 <div id="gestMsg" style="text-align:center;font-size:14px;margin:10px 0;color:var(--dim)">把左摇杆推到<b style="color:var(--green)">右下角</b>保持 2 秒，或点击演示观看</div>
 <div style="text-align:center"><button class="btn btn-prev btn-sm" id="btnGestDemo">▶ 演示解锁手势</button></div>
 </div>
+<div class="card"><h3>飞行模式与辅助通道 · 默认确认</h3>
+<p class="note">以下为飞控当前配置，逐项默记。Y3 不可用或错误的配置会标红提示。</p>
+<div id="modeConfTbl"></div>
+<div id="auxConfTbl" style="margin-top:12px"></div>
+<div id="modeWarn" style="margin-top:10px"></div>
+<div style="margin-top:14px;display:flex;gap:12px;align-items:center">
+<button class="btn btn-next btn-sm" id="btnModeOk">✓ 我已记住默认设置</button>
+<span id="modeOkMsg" style="font-size:13px;color:var(--dim)"></span></div></div>
+<div class="card"><h3>EKF 状态（实时）</h3>
+<div class="grid4">
+<div class="tile"><div class="v" id="ekfVv">–</div><div class="k">速度方差</div></div>
+<div class="tile"><div class="v" id="ekfPh">–</div><div class="k">水平位置方差</div></div>
+<div class="tile"><div class="v" id="ekfPv">–</div><div class="k">垂直位置方差</div></div>
+<div class="tile"><div class="v" id="ekfCv">–</div><div class="k">罗盘方差</div></div>
+</div><p class="note">方差持续下降并稳定在小数值，说明初始化正常。</p></div>
 <div class="card"><h3>地面站辅助</h3>
-<div class="kv"><span>解锁状态</span><b id="armState">–</b></div>
-<div class="kv"><span>当前模式</span><b id="armMode">–</b></div>
-<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+<div style="margin-top:4px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
 <button class="btn btn-danger btn-sm" id="btnGcsArm">⚠️ 地面站解锁</button>
 <button class="btn btn-prev btn-sm" id="btnGcsDisarm">地面站上锁</button>
 <button class="btn btn-next btn-sm" id="btnArmOk">✓ 已完成解锁/上锁练习</button>
 </div>
 <p class="note">地面站解锁仅用于地面测试，<b style="color:var(--red)">务必确认桨叶无缠绕、周围无人</b>。</p></div>`;
-
 
 /* ---- 7 模式学习 ---- */
 R[7]=()=>`
@@ -1094,25 +1105,44 @@ function bindStep(i){
   }
 
   if(i===6){
-    const gate=()=>{ const ok=S.preheatOk&&S.armOk; $('btnNext').disabled=!ok; $('navHint').textContent=ok?'':HINTS[6]; };
-    /* 预热 */
-    const t0=Date.now();
+    const gate=()=>{ const ok=S.armOk&&S.modeOk; $('btnNext').disabled=!ok; $('navHint').textContent=ok?'':HINTS[6]; };
+    /* EKF */
     every(500,()=>{
       const e=FC.ekf;
       $('ekfVv').textContent=e.vv.toFixed(3); $('ekfPh').textContent=e.ph.toFixed(3);
       $('ekfPv').textContent=e.pv.toFixed(3); $('ekfCv').textContent=e.cv.toFixed(3);
-      const s2=Math.floor((Date.now()-t0)/1000); const el=$('preT'); if(el) el.textContent=s2;
     });
-    $('btnPreOk').onclick=()=>{
-      S.preheatOk=true;
-      $('tailLight').classList.remove('orange'); $('tailLight').classList.add('green');
-      $('btnPreOk').disabled=true; $('btnPreOk').textContent='✓ 预热完成';
-      gate();
+    /* ---- 语音播报 ---- */
+    let voiceOn=true, lastSpoke=-999;
+    const speak=t=>{ if(!voiceOn||!('speechSynthesis' in window)) return;
+      try{ const u=new SpeechSynthesisUtterance(t); u.lang='zh-CN'; u.rate=1.1;
+        speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(_){} };
+    $('btnVoice').onclick=()=>{ voiceOn=!voiceOn;
+      $('btnVoice').textContent=voiceOn?'🔊 语音播报：开':'🔇 语音播报：关'; };
+    $('btnVoiceTest').onclick=()=>{ const v=voiceOn; voiceOn=true;
+      speak('语音播报正常，'+$('mlModeCn').textContent); voiceOn=v; };
+    /* ---- 实时模式显示 ---- */
+    const MODE_CN={0:'手动',1:'绕圈',2:'自稳',3:'教练',4:'特技',5:'线传A',6:'线传B',7:'巡航',8:'自整定',10:'自动',11:'返航',12:'盘旋',13:'起飞',14:'防撞规避',15:'引导',16:'初始化中',17:'垂起自稳',18:'垂起悬停',19:'垂起定点',20:'垂起降落',21:'垂起返航',22:'垂起自整定',23:'垂起特技'};
+    const isQm=n=>n>=17&&n<=23;
+    const fmCh=pvi('FLTMODE_CH')||6;
+    const slotOf=pw=>pw<1230?1:pw<1360?2:pw<1490?3:pw<1620?4:pw<1749?5:6;
+    const paintMode=()=>{
+      const n=FC.modeNum;
+      if(n>=0){
+        $('mlMode').textContent=modeName(n);
+        $('mlMode').className='ml-mode '+(isQm(n)?'q':n===11?'r':n===7?'c':n===5?'f':'n');
+        $('mlModeCn').textContent=(MODE_CN[n]||'未知模式')+(FC.armed?' · 已解锁':' · 已上锁');
+        if(n!==lastSpoke){ lastSpoke=n; speak('当前飞行模式，'+(MODE_CN[n]||modeName(n))); }
+      }
+      const chv=FC.rc[fmCh-1]||0;
+      $('mlSlot').textContent=chv?('档位 '+slotOf(chv)+'（CH'+fmCh+' '+chv+'μs）'):'档位 –';
+      const a=$('mlArm'); a.textContent=FC.armed?'🔴 已解锁':'🟢 已上锁';
+      a.style.color=FC.armed?'var(--red)':'var(--green)';
+      if(FC.armed) armDone('（飞控已解锁）');
     };
-    /* 手势教学 */
+    /* ---- 解锁/上锁练习 ---- */
     const dotL=$('dotL'), dotR=$('dotR'), zoneArm=$('zoneArm'), zoneDis=$('zoneDis'), gestMsg=$('gestMsg');
     let armT0=0, demoRun=false;
-    /* CH2 俯仰按 ArduPilot 规范固定反向显示（低值=摇杆最高位，遥控器端设反转） */
     const setDot=(el,h,v,invV)=>{ if(!el) return;
       el.style.left=Math.max(4,Math.min(96,(h-1000)/10))+'%';
       const vv=invV?3000-v:v;
@@ -1125,22 +1155,21 @@ function bindStep(i){
     const paint=()=>{
       const ch3=FC.rc[2]||1500, ch4=FC.rc[3]||1500, ch1=FC.rc[0]||1500, ch2=FC.rc[1]||1500;
       setDot(dotR,ch1,ch2,true);
-      if(demoRun) return;
-      setDot(dotL,ch4,ch3,false);
-      const inArm=ch3<1150&&ch4>1850, inDis=ch3<1150&&ch4<1150;
-      if(zoneArm) zoneArm.classList.toggle('hit-arm',inArm);
-      if(zoneDis) zoneDis.classList.toggle('hit-dis',inDis);
-      if(inArm){ if(!armT0) armT0=Date.now();
-        const held=(Date.now()-armT0)/1000;
-        if(!S.armOk) gestMsg.innerHTML=`保持解锁手势… <b style="color:var(--cyan)">${held.toFixed(1)}s / 2s</b>`;
-        if(held>=2) armDone('（摇杆检测）');
-      } else if(inDis){
-        armT0=0;
-        if(!S.armOk) gestMsg.innerHTML='这是<b style="color:var(--amber)">上锁</b>手势（油门最低 + 方向左打保持 2 秒）';
-      } else { armT0=0; }
-      const a=$('armState'); if(a){ a.textContent=FC.armed?'已解锁':'已上锁'; a.className=FC.armed?'bad':'ok'; }
-      const mm=$('armMode'); if(mm) mm.textContent=modeName(FC.modeNum);
-      if(FC.armed) armDone('（飞控已解锁）');
+      if(!demoRun){
+        setDot(dotL,ch4,ch3,false);
+        const inArm=ch3<1150&&ch4>1850, inDis=ch3<1150&&ch4<1150;
+        if(zoneArm) zoneArm.classList.toggle('hit-arm',inArm);
+        if(zoneDis) zoneDis.classList.toggle('hit-dis',inDis);
+        if(inArm){ if(!armT0) armT0=Date.now();
+          const held=(Date.now()-armT0)/1000;
+          if(!S.armOk) gestMsg.innerHTML=`保持解锁手势… <b style="color:var(--cyan)">${held.toFixed(1)}s / 2s</b>`;
+          if(held>=2) armDone('（摇杆检测）');
+        } else if(inDis){
+          armT0=0;
+          if(!S.armOk) gestMsg.innerHTML='这是<b style="color:var(--amber)">上锁</b>手势（油门最低 + 方向左打保持 2 秒）';
+        } else { armT0=0; }
+      }
+      paintMode();
     };
     onFc('rc',paint); onFc('heartbeat',paint); every(500,paint); paint();
     $('btnGestDemo').onclick=()=>{
@@ -1149,7 +1178,7 @@ function bindStep(i){
       const iv=setInterval(()=>{
         t+=60;
         if(t<800){ const k=t/800; setDot(dotL,1500+500*k,1500-500*k,false); }
-        else if(t<2600){ setDot(dotL,2000,1000); }
+        else if(t<2600){ setDot(dotL,2000,1000,false); }
         else { clearInterval(iv); demoRun=false; setDot(dotL,1500,1500,false);
           if(!S.armOk) gestMsg.innerHTML='把左摇杆推到<b style="color:var(--green)">右下角</b>保持 2 秒，或点击演示观看'; }
       },60);
@@ -1157,6 +1186,35 @@ function bindStep(i){
     $('btnGcsArm').onclick=()=>{ if(confirm('⚠️ 确认地面站解锁吗？\n\n请确保：\n1. 桨叶无缠绕、周围无人\n2. 飞机已放置稳妥')) FC.arm(true).catch(e=>alert(e.message)); };
     $('btnGcsDisarm').onclick=()=>{ FC.arm(false).catch(e=>alert(e.message)); };
     $('btnArmOk').onclick=()=>{ armDone('（手动确认）'); };
+    /* ---- 模式与辅助通道默认确认 ---- */
+    const y3warn=(n,qEn)=>{
+      if(n===16) return ['err','INITIALISING 不可设为常用模式'];
+      if(n===14) return ['err','AVOID_ADSB 由防撞系统自动进入，不可手动设置'];
+      if(isQm(n)&&!qEn) return ['err','Q 系列模式需要 Q_ENABLE=1，否则无法进入'];
+      if(n===13) return ['warn','固定翼自动起飞（需跑道）；VTOL 建议用 QLOITER 垂直起飞'];
+      if(n===8) return ['warn','AUTOTUNE 是固定翼自整定；VTOL 用 QAUTOTUNE'];
+      return null;
+    };
+    const qEn=pvi('Q_ENABLE')===1;
+    let mrows='', hasQ=false, errN=0; const seen={};
+    for(let s2=1;s2<=6;s2++){
+      const v=pvi('FLTMODE'+s2), w=v===undefined?null:y3warn(v,qEn);
+      if(v!==undefined){ if(isQm(v))hasQ=true; seen[v]=(seen[v]||0)+1; if(w&&w[0]==='err')errN++; }
+      mrows+='<tr><td>'+s2+'</td><td class="mp">FLTMODE'+s2+'</td><td class="wz">'+(v===undefined?'–':modeName(v)+(MODE_CN[v]?'（'+MODE_CN[v]+'）':''))+'</td><td>'+(w?'<span class="'+w[0]+'">'+w[1]+'</span>':'<span class="ok">✓</span>')+'</td></tr>';
+    }
+    $('modeConfTbl').innerHTML='<table class="map"><tr><th>档位</th><th>参数</th><th>模式</th><th>Y3 检查</th></tr>'+mrows+'</table>';
+    let arows='';
+    for(let ch=5;ch<=16;ch++){ if(ch===fmCh) continue;
+      const v=pvi('RC'+ch+'_OPTION');
+      arows+='<tr'+(v?'':' style="opacity:.45"')+'><td>CH'+ch+'</td><td class="mp">RC'+ch+'_OPTION</td><td class="wz">'+(v===undefined?'–':auxName(v))+'</td></tr>';
+    }
+    $('auxConfTbl').innerHTML='<table class="map"><tr><th>通道</th><th>参数</th><th>功能</th></tr>'+arows+'</table>';
+    const dups=Object.keys(seen).filter(k=>seen[k]>1);
+    $('modeWarn').innerHTML=(errN?'<div class="warn-strip">⚠️ 发现 <b style="color:var(--red)">'+errN+' 项错误</b>配置，请回第 4 步修改后再继续。</div>':'')
+      +(!hasQ&&qEn?'<p class="note">建议至少配置一个 QLOITER，用于垂直起降。</p>':'')
+      +(dups.length?'<p class="note">存在重复配置的模式档位。</p>':'');
+    $('btnModeOk').onclick=()=>{ S.modeOk=true; $('btnModeOk').disabled=true;
+      $('btnModeOk').textContent='✓ 已确认记住'; gate(); };
     gate();
   }
 
