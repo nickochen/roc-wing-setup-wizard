@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROC Wing 新手配置向导 · 网页版</title>
+<style>
+:root{
+  --bg:#070b12; --panel:#0e1626; --panel2:#111c30;
+  --line:#1c2942; --line2:#24344f;
+  --txt:#dbe7f5; --dim:#8ba0bd; --dim2:#5c718c;
+  --cyan:#22d3ee; --cyan-d:#0e7490; --amber:#fbbf24; --green:#34d399;
+  --red:#f87171; --blue:#60a5fa; --violet:#a78bfa;
+  --glow-c:0 0 18px rgba(34,211,238,.35);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;
+  background:var(--bg);color:var(--txt);overflow:hidden;font-size:14px;
+  background-image:radial-gradient(1200px 500px at 70% -10%,rgba(34,211,238,.06),transparent),
+  radial-gradient(900px 500px at 10% 110%,rgba(167,139,250,.05),transparent),
+  linear-gradient(rgba(28,41,66,.25) 1px,transparent 1px),linear-gradient(90deg,rgba(28,41,66,.25) 1px,transparent 1px);
+  background-size:auto,auto,44px 44px,44px 44px}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:#24344f;border-radius:4px}
+.topbar{height:60px;display:flex;align-items:center;gap:14px;padding:0 18px;
+  background:rgba(11,18,32,.92);border-bottom:1px solid var(--line);position:relative;z-index:10}
+.logo{width:36px;height:36px;border-radius:10px;flex:none;background:linear-gradient(135deg,#0e7490,#22d3ee);
+  display:flex;align-items:center;justify-content:center;box-shadow:var(--glow-c);font-size:20px}
+.title h1{font-size:16px;letter-spacing:1px;font-weight:700}
+.title h1 .sub{color:var(--cyan)}
+.title p{font-size:11px;color:var(--dim);letter-spacing:.5px;margin-top:2px}
+.topbar .spacer{flex:1}
+.pill{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--dim);
+  border:1px solid var(--line2);border-radius:20px;padding:6px 14px;background:var(--panel);white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:#475569;flex:none}
+.dot.on{background:var(--green);box-shadow:0 0 8px var(--green)}
+.badge-live{font-size:11px;color:var(--green);border:1px solid rgba(52,211,153,.5);border-radius:6px;
+  padding:5px 10px;background:rgba(52,211,153,.06);white-space:nowrap}
+.badge-demo{font-size:11px;color:var(--amber);border:1px dashed rgba(251,191,36,.5);border-radius:6px;
+  padding:5px 10px;background:rgba(251,191,36,.06);white-space:nowrap}
+.progress-wrap{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--dim)}
+.progress-bar{width:140px;height:6px;border-radius:3px;background:#162032;overflow:hidden}
+.progress-bar i{display:block;height:100%;width:0;border-radius:3px;
+  background:linear-gradient(90deg,var(--cyan-d),var(--cyan));box-shadow:var(--glow-c);transition:width .5s ease}
+.layout{display:flex;height:calc(100vh - 60px)}
+.rail{width:264px;flex:none;background:rgba(11,18,32,.85);border-right:1px solid var(--line);
+  padding:16px 12px;overflow-y:auto;display:flex;flex-direction:column}
+.rail-head{font-size:11px;color:var(--dim2);letter-spacing:2px;padding:0 8px 10px}
+.rail-foot{margin-top:auto;padding:12px 8px 0;font-size:11px;color:var(--dim2);line-height:1.8;border-top:1px solid var(--line)}
+.step{display:flex;gap:12px;padding:10px;border-radius:10px;cursor:pointer;border:1px solid transparent;position:relative;transition:all .2s}
+.step:hover{background:rgba(34,211,238,.05)}
+.step .num{width:30px;height:30px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;color:var(--dim);border:1.5px solid var(--line2);background:var(--panel)}
+.step .tx b{display:block;font-size:13px;font-weight:600;color:var(--dim);line-height:1.35}
+.step .tx span{font-size:11px;color:var(--dim2)}
+.step.done .num{background:rgba(52,211,153,.12);border-color:var(--green);color:var(--green)}
+.step.done .tx b{color:var(--txt)}
+.step.active{background:rgba(34,211,238,.08);border-color:rgba(34,211,238,.35)}
+.step.active .num{background:var(--cyan);border-color:var(--cyan);color:#06222b;box-shadow:var(--glow-c)}
+.step.active .tx b{color:#fff}
+.step.locked{opacity:.45;cursor:not-allowed}
+.step:not(:last-child)::after{content:"";position:absolute;left:24px;top:44px;bottom:-8px;width:2px;background:var(--line)}
+.step.done:not(:last-child)::after{background:rgba(52,211,153,.4)}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.stage{flex:1;overflow-y:auto;padding:28px 36px;position:relative}
+.step-hero{display:flex;align-items:flex-start;gap:18px;margin-bottom:20px}
+.step-no{font-size:64px;font-weight:800;line-height:1;color:transparent;flex:none;-webkit-text-stroke:1.5px rgba(34,211,238,.45)}
+.step-hero h2{font-size:22px;letter-spacing:1px;margin-bottom:6px}
+.step-hero h2 .ref{font-size:11px;font-weight:400;color:var(--cyan);border:1px solid rgba(34,211,238,.4);
+  border-radius:6px;padding:2px 8px;margin-left:10px;vertical-align:middle;letter-spacing:0}
+.step-hero p{color:var(--dim);font-size:13px;line-height:1.7;max-width:780px}
+.warn-strip{margin:14px 0;padding:12px 16px;border-radius:10px;font-size:13px;line-height:1.7;
+  border:1px solid rgba(248,113,113,.4);background:rgba(248,113,113,.07);color:#fecaca}
+.warn-strip.amber{border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.06);color:#fde68a}
+.warn-strip b{color:#fff}
+.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);
+  border-radius:14px;padding:20px;margin-bottom:16px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.card h3{font-size:14px;letter-spacing:1px;margin-bottom:14px;color:var(--cyan);display:flex;align-items:center;gap:8px}
+.card h3::before{content:"";width:3px;height:14px;border-radius:2px;background:var(--cyan);box-shadow:var(--glow-c)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media(max-width:1100px){.grid2,.grid3,.grid4{grid-template-columns:1fr 1fr}}
+.navbar{flex:none;display:flex;align-items:center;gap:14px;padding:14px 36px;
+  border-top:1px solid var(--line);background:rgba(11,18,32,.92)}
+.btn{border:none;cursor:pointer;font-size:14px;font-weight:600;letter-spacing:1px;border-radius:10px;
+  padding:12px 34px;transition:all .2s;font-family:inherit}
+.btn-prev{background:var(--panel2);color:var(--txt);border:1px solid var(--line2)}
+.btn-prev:hover:not(:disabled){border-color:var(--cyan);color:var(--cyan)}
+.btn-next{background:linear-gradient(135deg,#0e7490,#22d3ee);color:#04222b;box-shadow:var(--glow-c)}
+.btn-next:hover:not(:disabled){filter:brightness(1.12);transform:translateY(-1px)}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.btn-sm{padding:8px 18px;font-size:12px}
+.btn-danger{background:rgba(248,113,113,.12);color:var(--red);border:1px solid rgba(248,113,113,.4)}
+.btn-ghost{background:transparent;color:var(--dim2);border:none;font-size:12px;padding:8px 10px;letter-spacing:0}
+.btn-ghost:hover{color:var(--amber)}
+.nav-hint{font-size:12px;color:var(--dim2)}
+.navbar .spacer{flex:1}
+.ch-row{display:flex;align-items:center;gap:12px;margin:8px 0}
+.ch-row .lb{width:92px;flex:none;font-size:12px;color:var(--dim)}
+.ch-row .lb b{color:var(--txt)}
+.ch-bar{flex:1;height:22px;background:#0a1220;border:1px solid var(--line);border-radius:6px;position:relative;overflow:hidden}
+.ch-bar .mid{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(139,160,189,.4)}
+.ch-bar .fill{position:absolute;top:3px;bottom:3px;border-radius:4px;background:linear-gradient(90deg,var(--cyan-d),var(--cyan));transition:all .1s}
+.ch-val{width:64px;flex:none;text-align:right;font-family:Consolas,monospace;font-size:13px;color:var(--cyan)}
+.opt{border:1.5px solid var(--line2);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;
+  background:rgba(10,18,32,.5);position:relative}
+.opt:hover{border-color:var(--cyan)}
+.opt.sel{border-color:var(--cyan);background:rgba(34,211,238,.07);box-shadow:var(--glow-c)}
+.opt.sel::after{content:"✓";position:absolute;top:10px;right:12px;color:var(--cyan);font-weight:800}
+.opt h4{font-size:14px;margin-bottom:6px}
+.opt p{font-size:12px;color:var(--dim);line-height:1.7}
+.opt .tag{display:inline-block;font-size:11px;border-radius:4px;padding:2px 8px;margin-top:8px;
+  background:rgba(52,211,153,.12);color:var(--green);border:1px solid rgba(52,211,153,.35)}
+.opt .tag.warn{background:rgba(251,191,36,.1);color:var(--amber);border-color:rgba(251,191,36,.35)}
+.check{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:10px;cursor:pointer;transition:background .15s}
+.check:hover{background:rgba(34,211,238,.05)}
+.check input{width:18px;height:18px;margin-top:2px;accent-color:var(--cyan);cursor:pointer;flex:none}
+.check .t b{display:block;font-size:13px;margin-bottom:3px}
+.check .t span{font-size:12px;color:var(--dim);line-height:1.6}
+.check.done .t b{color:var(--green)}
+.inp,select.inp{background:#0a1220;border:1px solid var(--line2);color:var(--txt);border-radius:8px;
+  padding:10px 14px;font-size:14px;font-family:inherit;outline:none;width:100%}
+.inp:focus{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(34,211,238,.2)}
+label.f{display:block;font-size:12px;color:var(--dim);margin-bottom:6px;letter-spacing:1px}
+.kv{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px dashed var(--line);font-size:13px;gap:10px}
+.kv span:first-child{color:var(--dim)}
+.kv b{font-family:Consolas,monospace;color:var(--cyan);font-weight:600;text-align:right}
+.kv b.ok{color:var(--green)} .kv b.bad{color:var(--red)} .kv b.warnv{color:var(--amber)}
+.tile{background:#0a1220;border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+.tile .v{font-size:22px;font-weight:700;font-family:Consolas,monospace;color:var(--cyan)}
+.tile .v.ok{color:var(--green)} .tile .v.bad{color:var(--red)} .tile .v.warnv{color:var(--amber)}
+.tile .k{font-size:11px;color:var(--dim2);margin-top:6px;letter-spacing:1px}
+.logbox{background:#060a11;border:1px solid var(--line);border-radius:10px;padding:12px 14px;height:150px;
+  overflow-y:auto;font-family:Consolas,monospace;font-size:12px;line-height:1.8;color:var(--dim)}
+.logbox .ok{color:var(--green)} .logbox .warn{color:var(--amber)} .logbox .err{color:var(--red)}
+.sticks{display:flex;gap:40px;justify-content:center;padding:10px 0 4px;flex-wrap:wrap}
+.stick{width:150px;height:150px;border-radius:50%;background:#0a1220;border:2px solid var(--line2);position:relative}
+.stick .ch{position:absolute;top:6px;left:0;right:0;text-align:center;font-size:11px;color:var(--dim)}
+.stick .knob{position:absolute;width:34px;height:34px;border-radius:50%;left:50%;top:50%;
+  transform:translate(-50%,-50%);background:radial-gradient(circle at 35% 30%,#67e8f9,#0e7490);
+  box-shadow:var(--glow-c);transition:all .5s}
+.stick .lbl{position:absolute;bottom:-24px;left:0;right:0;text-align:center;font-size:12px;color:var(--amber)}
+.tail-light{width:46px;height:46px;border-radius:50%;margin:6px auto;transition:all 1s;background:#3a2a10;border:2px solid #5c4a1a}
+.tail-light.orange{background:radial-gradient(circle at 40% 35%,#fcd34d,#f59e0b);box-shadow:0 0 24px rgba(245,158,11,.8);border-color:#f59e0b}
+.tail-light.green{background:radial-gradient(circle at 40% 35%,#6ee7b7,#10b981);box-shadow:0 0 24px rgba(52,211,153,.8);border-color:#10b981}
+.mode-card{border-radius:12px;padding:18px;border:1px solid var(--line2);background:rgba(10,18,32,.55)}
+.mode-card .mn{font-size:16px;font-weight:800;letter-spacing:1px;margin-bottom:4px}
+.mode-card .en{font-size:11px;color:var(--dim2);letter-spacing:2px;margin-bottom:10px}
+.mode-card p{font-size:12.5px;color:var(--dim);line-height:1.8}
+.mode-card.q .mn{color:var(--cyan)} .mode-card.c .mn{color:var(--amber)}
+.mode-card.f .mn{color:var(--blue)} .mode-card.r .mn{color:var(--violet)}
+.finish{text-align:center;padding:40px 20px}
+.finish .big{font-size:64px;margin-bottom:12px;animation:pop .5s ease}
+@keyframes pop{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+.finish h2{font-size:26px;letter-spacing:2px;margin-bottom:10px;
+  background:linear-gradient(90deg,#34d399,#22d3ee);-webkit-background-clip:text;background-clip:text;color:transparent}
+.finish p{color:var(--dim);line-height:2;font-size:14px}
+table.map{width:100%;border-collapse:collapse;font-size:13px}
+table.map th,table.map td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left}
+table.map th{color:var(--dim2);font-weight:500;font-size:11px;letter-spacing:2px}
+table.map td.mp{color:var(--dim)} table.map td.wz{color:var(--cyan)}
+.note{font-size:12px;color:var(--dim2);line-height:1.8;margin-top:10px}
+.step-fade{animation:fade .35s ease}
+@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.spin{display:inline-block;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">🛩️</div>
+  <div class="title">
+    <h1>ROC WING <span class="sub">新手配置向导</span></h1>
+    <p>网页版 · WebSerial 直连飞控 · 替代 MISSION PLANNER 配置流程 · 按官方说明书步骤编排</p>
+  </div>
+  <div class="spacer"></div>
+  <span id="modeBadge" class="badge-demo" style="display:none">🎬 演示模式</span>
+  <div class="pill"><span class="dot" id="connDot"></span><span id="connTxt">未连接飞控</span></div>
+  <button class="btn btn-sm btn-ghost" id="btnDisc" style="display:none">断开</button>
+  <div class="progress-wrap"><span id="progTxt">0 / 13</span><div class="progress-bar"><i id="progFill"></i></div></div>
+</div>
+<div class="layout">
+  <div class="rail">
+    <div class="rail-head">配置步骤</div>
+    <div id="railSteps"></div>
+    <div class="rail-foot">💡 请使用 <b style="color:var(--cyan)">Chrome / Edge</b> 打开本页面（需 WebSerial 支持）。可双击本地打开，或部署到 HTTPS / localhost。<br>飞控通过 USB 连接电脑后，在第 2 步点击连接。</div>
+  </div>
+  <div class="main">
+    <div class="stage"><div id="stageBody" class="step-fade"></div></div>
+    <div class="navbar">
+      <button class="btn btn-prev" id="btnPrev">← 上一步</button>
+      <span class="nav-hint" id="navHint"></span>
+      <div class="spacer"></div>
+      <button class="btn btn-ghost" id="btnSkip" style="display:none">跳过此步 →</button>
+      <button class="btn btn-next" id="btnNext">下一步 →</button>
+    </div>
+  </div>
+</div>
+<script>
+"use strict";
+/* =====================================================================
+   ROC Wing 新手配置向导 · 网页版
+   WebSerial + 自研 MAVLink，直连飞控完成说明书全部配置步骤。
+   ===================================================================== */
+const $ = id => document.getElementById(id);
+
+/* ================= MAVLink v1/v2 最小实现 ================= */
+const MAV = { sysid:255, compid:190, seq:0, targetSys:1, targetComp:1 };
+const CRC_EXTRA = {0:50,1:124,24:24,65:118,21:159,22:220,20:214,23:168,76:152,77:143,253:83,148:178,193:75};
+
+function mavCrc(data, extra){
+  let crc = 0xFFFF;
+  const acc = b => {
+    let tmp = (b ^ (crc & 0xFF)) & 0xFF;
+    tmp = (tmp ^ (tmp << 4)) & 0xFF;
+    crc = ((crc >>> 8) ^ (tmp << 8) ^ (tmp << 3) ^ (tmp >>> 4)) & 0xFFFF;
+  };
+  for (let i=0;i<data.length;i++) acc(data[i]);
+  acc(extra);
+  return crc;
+}
+function packV2(msgid, payload){
+  const extra = CRC_EXTRA[msgid];
+  const h = new Uint8Array(10);
+  h[0]=0xFD; h[1]=payload.length; h[2]=0; h[3]=0;
+  h[4]=MAV.seq & 0xFF; MAV.seq=(MAV.seq+1)&0xFF;
+  h[5]=MAV.sysid; h[6]=MAV.compid;
+  h[7]=msgid&0xFF; h[8]=(msgid>>8)&0xFF; h[9]=(msgid>>16)&0xFF;
+  const body = new Uint8Array(9+payload.length);
+  body.set(h.subarray(1),0); body.set(payload,9);
+  const crc = mavCrc(body, extra);
+  const out = new Uint8Array(12+payload.length);
+  out.set(h,0); out.set(payload,10);
+  out[10+payload.length]=crc&0xFF; out[11+payload.length]=(crc>>8)&0xFF;
+  return out;
+}
+function encHeartbeat(){
+  const p=new Uint8Array(9), dv=new DataView(p.buffer);
+  dv.setUint32(0,0,true);   /* custom_mode u32 按 MAVLink 重排规则在最前 */
+  dv.setUint8(4,6); dv.setUint8(5,8); dv.setUint8(6,0);
+  dv.setUint8(7,0); dv.setUint8(8,3);
+  return packV2(0,p);
+}
+function encParamRequestList(){
+  return packV2(21, new Uint8Array([MAV.targetSys, MAV.targetComp]));
+}
+function encParamRequestRead(name, index){
+  const p=new Uint8Array(20), dv=new DataView(p.buffer);
+  dv.setInt16(0, index===undefined?-1:index, true);
+  dv.setUint8(2,MAV.targetSys); dv.setUint8(3,MAV.targetComp);
+  for(let i=0;i<16;i++) dv.setUint8(4+i, i<name.length?name.charCodeAt(i):0);
+  return packV2(20,p);
+}
+function encParamSet(name, value, type){
+  const p=new Uint8Array(23), dv=new DataView(p.buffer);
+  dv.setFloat32(0, value, true);   /* MAVLink: param_value 以 float 传输且排最前 */
+  dv.setUint8(4,MAV.targetSys); dv.setUint8(5,MAV.targetComp);
+  for(let i=0;i<16;i++) dv.setUint8(6+i, i<name.length?name.charCodeAt(i):0);
+  dv.setUint8(22, type);
+  return packV2(23,p);
+}
+function encCommandLong(cmd, a,b,c,d,e,f,g){
+  const p=new Uint8Array(33), dv=new DataView(p.buffer);
+  [a,b,c,d,e,f,g].forEach((v,i)=>dv.setFloat32(i*4, v||0, true));
+  dv.setUint16(28,cmd,true);
+  dv.setUint8(30,MAV.targetSys); dv.setUint8(31,MAV.targetComp); dv.setUint8(32,0);
+  return packV2(76,p);
+}
+const encSetMsgInterval = (msgid,hz) => encCommandLong(511, msgid, hz>0?1e6/hz:0, 0,0,0,0,0);
+
+/* ---- 安全读取（兼容零截断短包） ---- */
+const dvOf = p => new DataView(p.buffer, p.byteOffset, p.byteLength);
+const U8 =(dv,o)=> o<dv.byteLength?dv.getUint8(o):0;
+const U16=(dv,o)=> o+1<dv.byteLength?dv.getUint16(o,true):0;
+const I16=(dv,o)=> o+1<dv.byteLength?dv.getInt16(o,true):0;
+const U32=(dv,o)=> o+3<dv.byteLength?dv.getUint32(o,true):0;
+const I32=(dv,o)=> o+3<dv.byteLength?dv.getInt32(o,true):0;
+const F32=(dv,o)=> o+3<dv.byteLength?dv.getFloat32(o,true):0;
+const STR=(dv,o,n)=>{ let s=''; for(let i=0;i<n&&o+i<dv.byteLength;i++){ const c=dv.getUint8(o+i); if(!c)break; s+=String.fromCharCode(c);} return s; };
+
+/* ---- 收包解析 ---- */
+const msgHandlers = {};
+const onMsg = (id,fn)=>{ msgHandlers[id]=fn; };
+let rxBuf = new Uint8Array(0);
+function feedBytes(chunk){
+  const nb=new Uint8Array(rxBuf.length+chunk.length);
+  nb.set(rxBuf); nb.set(chunk,rxBuf.length); rxBuf=nb;
+  let i=0;
+  while(i<rxBuf.length){
+    const m=rxBuf[i];
+    if(m!==0xFD&&m!==0xFE){ i++; continue; }
+    if(m===0xFD){
+      if(i+10>rxBuf.length) break;
+      const len=rxBuf[i+1];
+      if(i+12+len>rxBuf.length) break;
+      const msgid=rxBuf[i+7]|(rxBuf[i+8]<<8)|(rxBuf[i+9]<<16);
+      const extra=CRC_EXTRA[msgid];
+      const body=rxBuf.subarray(i+1,i+10+len);
+      const ok = extra===undefined ? true :
+        (()=>{ const c=mavCrc(body,extra);
+          return (c&0xFF)===rxBuf[i+10+len] && ((c>>8)&0xFF)===rxBuf[i+11+len]; })();
+      if(ok){ const h=msgHandlers[msgid]; if(h) h(rxBuf.subarray(i+10,i+10+len), rxBuf[i+5], rxBuf[i+6]); }
+      i+=12+len;
+    }else{
+      if(i+6>rxBuf.length) break;
+      const len=rxBuf[i+1];
+      if(i+8+len>rxBuf.length) break;
+      const msgid=rxBuf[i+5], extra=CRC_EXTRA[msgid];
+      const body=rxBuf.subarray(i+1,i+6+len);
+      const ok = extra===undefined ? true :
+        (()=>{ const c=mavCrc(body,extra);
+          return (c&0xFF)===rxBuf[i+6+len] && ((c>>8)&0xFF)===rxBuf[i+7+len]; })();
+      if(ok){ const h=msgHandlers[msgid]; if(h) h(rxBuf.subarray(i+6,i+6+len), rxBuf[i+3], rxBuf[i+4]); }
+      i+=8+len;
+    }
+  }
+  rxBuf = rxBuf.slice(i);
+}
+/* ================= 飞控接口层（真机 / 演示 共用接口） ================= */
+const PLANE_MODES = {0:'MANUAL',1:'CIRCLE',2:'STABILIZE',3:'TRAINING',4:'ACRO',5:'FBWA',6:'FBWB',7:'CRUISE',8:'AUTOTUNE',10:'AUTO',11:'RTL',12:'LOITER',13:'TAKEOFF',14:'AVOID_ADSB',15:'GUIDED',16:'INITIALISING',17:'QSTABILIZE',18:'QHOVER',19:'QLOITER',20:'QLAND',21:'QRTL',22:'QAUTOTUNE',23:'QACRO'};
+const modeName = n => PLANE_MODES[n]!==undefined ? PLANE_MODES[n] : '未知('+n+')';
+
+const FC = {
+  demo:false, connected:false, paramsDone:false,
+  params:new Map(), paramCount:0, _paramIdx:new Set(), _paramWaiters:[],
+  rc:new Array(18).fill(1500),
+  voltage:0, current:0, battRemain:-1,
+  gpsFix:0, sats:0, lat:0, lon:0,
+  modeNum:-1, armed:false, fwVer:'', apName:'',
+  ekf:{flags:0,vv:0,ph:0,pv:0,cv:0},
+  msgs:[], listeners:{},
+  on(e,f){ (this.listeners[e]=this.listeners[e]||[]).push(f); },
+  off(e,f){ if(this.listeners[e]) this.listeners[e]=this.listeners[e].filter(x=>x!==f); },
+  emit(e,d){ (this.listeners[e]||[]).forEach(f=>{ try{f(d)}catch(_){}}); },
+  log(sev,text){ this.msgs.push({sev,text,t:Date.now()}); if(this.msgs.length>80)this.msgs.shift(); this.emit('msg',{sev,text}); },
+
+  /* ---------- 真机连接 ---------- */
+  async connect(){
+    if(!('serial' in navigator)) throw new Error('当前浏览器不支持 WebSerial，请使用 Chrome / Edge 打开本页面。');
+    const port = await navigator.serial.requestPort();
+    await port.open({baudRate:115200});
+    this.port=port; this.demo=false;
+    this.writer = port.writable.getWriter();
+    this._send = d => this.writer.write(d);
+    this._send(encHeartbeat());
+    this._hbTimer = setInterval(()=>{ try{this._send(encHeartbeat());}catch(_){}} ,1000);
+    this._readLoop(port);
+    await this._waitFor(()=>this._hbSeen, 9000, '未收到飞控心跳，请确认飞控已上电、USB 线为数据线');
+    this.connected=true;
+    /* 数据流订阅 */
+    this._send(encSetMsgInterval(65,5));
+    this._send(encSetMsgInterval(1,2));
+    this._send(encSetMsgInterval(24,2));
+    this._send(encSetMsgInterval(193,1));
+    this._send(encCommandLong(520,1,0,0,0,0,0,0)); /* 请求飞控版本 */
+    this.log(6,'已连接，正在下载参数表…');
+    await this.downloadParams();
+    this.paramsDone=true;
+    this.log(6,'参数表下载完成（'+this.params.size+' 个）');
+  },
+  async _readLoop(port){
+    const reader = port.readable.getReader();
+    this._reader=reader;
+    try{
+      while(true){
+        const {value,done} = await reader.read();
+        if(done) break;
+        if(value && value.length) feedBytes(value);
+      }
+    }catch(e){ /* 断开 */ }
+    finally{ try{reader.releaseLock();}catch(_){} }
+    if(this.connected) this._onDrop();
+  },
+  _onDrop(){
+    this.connected=false; this.paramsDone=false;
+    clearInterval(this._hbTimer);
+    this.emit('disconnect',{});
+  },
+  async disconnect(){
+    try{ clearInterval(this._hbTimer); }catch(_){}
+    try{ clearInterval(this._demoTimer); }catch(_){}
+    this.demo=false;
+    try{ if(this._reader) await this._reader.cancel(); }catch(_){}
+    try{ if(this.writer) this.writer.releaseLock(); }catch(_){}
+    try{ if(this.port) await this.port.close(); }catch(_){}
+    this.connected=false; this.paramsDone=false;
+    this.emit('disconnect',{});
+  },
+  _waitFor(cond, ms, errMsg){
+    return new Promise((res,rej)=>{
+      const t0=Date.now();
+      const iv=setInterval(()=>{
+        if(cond()){ clearInterval(iv); res(); }
+        else if(Date.now()-t0>ms){ clearInterval(iv); rej(new Error(errMsg||'超时')); }
+      },120);
+    });
+  },
+
+  /* ---------- 参数 ---------- */
+  async downloadParams(onProg){
+    this._paramIdx=new Set(); this.paramCount=0;
+    if(this.demo){
+      for(let i=0;i<=this.params.size;i++){ onProg&&onProg(i,this.params.size); await new Promise(r=>setTimeout(r,2)); }
+      return;
+    }
+    this._send(encParamRequestList());
+    const t0=Date.now();
+    await new Promise(res=>{
+      const iv=setInterval(()=>{
+        onProg&&onProg(this._paramIdx.size, this.paramCount||'…');
+        if(this.paramCount && this._paramIdx.size>=this.paramCount){ clearInterval(iv); res(); }
+        else if(Date.now()-t0>30000){ clearInterval(iv); res(); }
+      },300);
+    });
+  },
+  async getParam(name){
+    if(this.params.has(name)) return this.params.get(name).value;
+    if(this.demo) throw new Error('演示模式无此参数: '+name);
+    for(let r=0;r<3;r++){
+      this._send(encParamRequestRead(name));
+      try{ return await this._waitParam(name, 2500); }catch(e){}
+    }
+    throw new Error('读取参数超时: '+name);
+  },
+  _waitParam(name, ms){
+    return new Promise((res,rej)=>{
+      const to=setTimeout(()=>{ this._paramWaiters=this._paramWaiters.filter(w=>w!==w0); rej(new Error('timeout')); },ms);
+      const w0={name, ok:v=>{clearTimeout(to); res(v);}};
+      this._paramWaiters.push(w0);
+    });
+  },
+  async setParam(name, value){
+    const cur=this.params.get(name);
+    let type = cur?cur.type:9;
+    if(!cur) type=(await this.getParam(name), this.params.get(name).type);
+    const v = type<=8 ? Math.round(value) : value;   /* 整数类型取整，线上传输仍为 float */
+    if(this.demo){ this.params.set(name,{value:v,type}); this.emit('param',{name}); return true; }
+    this._send(encParamSet(name, v, type));
+    const echo = await this._waitParam(name, 4000).catch(()=>null);
+    if(echo===null) throw new Error('写入无回执: '+name);
+    const okk = type<=8 ? Math.abs(echo-v)<0.6 : Math.abs(echo-v)<Math.abs(v)*1e-4+1e-6;
+    if(!okk) throw new Error('写入回执不符: '+name);
+    return true;
+  },
+  async reboot(){ if(!this.demo) this._send(encCommandLong(246,1,0,0,0,0,0,0)); this.log(4,'已发送重启指令'); },
+  async arm(doArm){
+    if(!this.demo) this._send(encCommandLong(400, doArm?1:0, 0,0,0,0,0,0));
+    else { this.armed=!!doArm; this.emit('heartbeat',{}); }
+    this.log(doArm?4:6, doArm?'地面站请求解锁…':'地面站请求上锁…');
+  },
+
+  /* ---------- 演示模式 ---------- */
+  async connectDemo(){
+    this.demo=true; this.port=null;
+    const P=(v,t)=>({value:v,type:t});
+    [['RC1_MIN',1100,4],['RC1_MAX',1900,4],['RC1_TRIM',1500,4],
+     ['RC2_MIN',1100,4],['RC2_MAX',1900,4],['RC2_TRIM',1500,4],
+     ['RC3_MIN',1100,4],['RC3_MAX',1900,4],['RC3_TRIM',1100,4],
+     ['RC4_MIN',1100,4],['RC4_MAX',1900,4],['RC4_TRIM',1500,4],
+     ['RC5_MIN',1100,4],['RC5_MAX',1900,4],['RC5_TRIM',1500,4],
+     ['RC6_MIN',1100,4],['RC6_MAX',1900,4],['RC6_TRIM',1500,4],
+     ['RC7_MIN',1100,4],['RC7_MAX',1900,4],['RC7_TRIM',1500,4],
+     ['RC8_MIN',1100,4],['RC8_MAX',1900,4],['RC8_TRIM',1500,4],
+     ['FLTMODE_CH',6,2],['FLTMODE1',19,2],['FLTMODE2',7,2],['FLTMODE3',11,2],
+     ['FLTMODE4',5,2],['FLTMODE5',19,2],['FLTMODE6',11,2],
+     ['BATT_CAPACITY',6000,9],['BATT_MONITOR',4,2],
+     ['ARSPD_TYPE',2,2],['ARSPD_RATIO',2.0,9],['ARSPD_USE',1,2],
+     ['MSP_OPTIONS',0,2],
+     // Q_TILT_TYPE 演示预设已移除:之前误填 3(=Bicopter,按 ArduPilot 文档仅用于 tailsitter frame class 10);ROC Wing 为 Y3 三电机倾转,正确值以官方 PNP 手册为准(一般 0=Continuous 或 2=VectoredYaw),演示模式暂不预设
+    ].forEach(([n,v,t])=>this.params.set(n,P(v,t)));
+    this._hbSeen=true; this.connected=true;
+    this.modeNum=19; this.armed=false; this.fwVer='4.7.1'; this.apName='ArduPlane';
+    this.voltage=22.4; this.current=1.2; this.battRemain=96;
+    this.gpsFix=3; this.sats=12; this.lat=31.23; this.lon=121.47;
+    this.ekf={flags:0x7FF,vv:0.02,ph:0.05,pv:0.08,cv:0.03};
+    this.log(6,'演示模式：已连接虚拟飞控（ArduPlane 4.7.1）');
+    this.log(6,'参数表下载完成（'+this.params.size+' 个）');
+    this.paramsDone=true;
+    clearInterval(this._demoTimer);
+    this._demoTimer=setInterval(()=>{
+      const t=Date.now()/700;
+      for(let k=0;k<8;k++){
+        let v = k<4 ? 1500+Math.round(420*Math.sin(t*(k+1)*0.7+k*2)) : (k===5?1900:1500);
+        this.rc[k]=Math.max(1000,Math.min(2000,v));
+      }
+      this.voltage=22.3+Math.sin(Date.now()/5000)*0.1;
+      this.emit('rc',{}); this.emit('telemetry',{});
+    },150);
+  },
+};
+
+/* ---- 收包 → FC 状态（真机） ---- */
+onMsg(0,(p,sys,comp)=>{           /* HEARTBEAT：custom_mode u32 在最前 */
+  const dv=dvOf(p);
+  MAV.targetSys=sys; MAV.targetComp=comp;
+  FC.modeNum=U32(dv,0); FC.armed=!!(U8(dv,6)&128);
+  FC._hbSeen=true; FC.emit('heartbeat',{});
+});
+onMsg(22,(p)=>{                   /* PARAM_VALUE：value, count, index, id[16], type */
+  const dv=dvOf(p);
+  const val=F32(dv,0), count=U16(dv,4), idx=U16(dv,6);
+  const name=STR(dv,8,16), type=U8(dv,24);
+  FC.params.set(name,{value:val,type});
+  FC.paramCount=count; FC._paramIdx.add(idx);
+  (FC._paramWaiters||[]).filter(w=>w.name===name).forEach(w=>w.ok(val));
+  FC._paramWaiters=(FC._paramWaiters||[]).filter(w=>w.name!==name);
+  FC.emit('param',{name});
+});
+onMsg(65,(p)=>{                   /* RC_CHANNELS：time u32, chan1-18 u16, chancount, rssi */
+  const dv=dvOf(p);
+  for(let i=0;i<18;i++){ const v=U16(dv,4+i*2); if(v>=900&&v<=2100) FC.rc[i]=v; }
+  FC.emit('rc',{});
+});
+onMsg(1,(p)=>{                    /* SYS_STATUS */
+  const dv=dvOf(p);
+  FC.voltage=U16(dv,14)/1000; FC.current=I16(dv,16)/100;
+  if(dv.byteLength>30) FC.battRemain=dv.getInt8(30);
+  FC.emit('telemetry',{});
+});
+onMsg(24,(p)=>{                   /* GPS_RAW_INT */
+  const dv=dvOf(p);
+  FC.gpsFix=U8(dv,28); FC.sats=U8(dv,29);
+  FC.lat=I32(dv,8)/1e7; FC.lon=I32(dv,12)/1e7;
+  FC.emit('telemetry',{});
+});
+onMsg(193,(p)=>{                  /* EKF_STATUS_REPORT：6 个 f32 在前，flags u16 在后 */
+  const dv=dvOf(p);
+  FC.ekf={flags:U16(dv,20),vv:F32(dv,0),ph:F32(dv,4),pv:F32(dv,8),cv:F32(dv,12)};
+  FC.emit('telemetry',{});
+});
+onMsg(253,(p)=>{                  /* STATUSTEXT */
+  const dv=dvOf(p);
+  FC.log(U8(dv,0), STR(dv,1,50));
+});
+onMsg(148,(p)=>{                  /* AUTOPILOT_VERSION：flight_sw_version 在 @16 */
+  const dv=dvOf(p);
+  const v=U32(dv,16);
+  FC.fwVer=((v>>>24)&255)+'.'+((v>>>16)&255)+'.'+((v>>>8)&255);
+  FC.emit('telemetry',{});
+});
+onMsg(77,()=>{});
+/* ================= 向导 UI ================= */
+const S = { step:0, done:new Set(), wireOk:false, calibrated:false, modesDone:false,
+  battDone:false, cgOk:false, arspdDone:false, preheatOk:false, armOk:false,
+  modeRead:false, vtxDone:false };
+const TOTAL = 13;
+const STEPS = [
+  {t:'开箱与接线检查', s:'ELRS / 图传 / 云台接线', ref:'P2–4'},
+  {t:'连接飞控', s:'USB 直连 · 下载参数', ref:'P5'},
+  {t:'遥控器校准', s:'8 通道行程校准', ref:'P6'},
+  {t:'飞行模式设置', s:'CH6 三档开关', ref:'P7–8'},
+  {t:'电池设置', s:'容量与电压确认', ref:'P9'},
+  {t:'重心检查', s:'CG 平衡点确认', ref:'P11'},
+  {t:'空速计设置', s:'机头罩类型 · 缩放系数', ref:'P12–13'},
+  {t:'上电预热', s:'EKF 收敛 · 尾灯变绿', ref:'P14'},
+  {t:'解锁 / 上锁', s:'摇杆手势 · 状态确认', ref:'P15–16'},
+  {t:'飞行模式学习', s:'QLOITER / CRUISE / FBWA / RTL', ref:'P17–21 · 26'},
+  {t:'遥控器操控说明', s:'VTOL 与固定翼杆量', ref:'P22–25'},
+  {t:'图传与云台', s:'OSD · DJI / C20-T', ref:'P27–33'},
+  {t:'起飞前检查', s:'实时遥测 · 放飞', ref:'—'},
+];
+const SKIPPABLE = new Set([2,3,4,6,11]);
+let maxReached = 0, cleaners = [];
+const later = fn => cleaners.push(fn);
+const onFc = (e,f) => { FC.on(e,f); later(()=>FC.off(e,f)); };
+const every = (ms,f) => { const t=setInterval(f,ms); later(()=>clearInterval(t)); return t; };
+
+const canNext = [
+  ()=>S.wireOk,
+  ()=>FC.connected && FC.paramsDone,
+  ()=>S.calibrated,
+  ()=>S.modesDone,
+  ()=>S.battDone,
+  ()=>S.cgOk,
+  ()=>S.arspdDone,
+  ()=>S.preheatOk,
+  ()=>S.armOk,
+  ()=>S.modeRead,
+  ()=>true,
+  ()=>S.vtxDone,
+  ()=>true,
+];
+const HINTS = [
+  '请勾选全部接线项后继续','请先连接飞控并等待参数下载完成','请完成遥控器校准（或跳过）',
+  '请写入飞行模式（或跳过）','请写入电池容量（或跳过）','请确认重心',
+  '请选择机头罩类型并写入（或跳过）','请确认预热完成','请完成解锁/上锁确认',
+  '请阅读各模式说明','了解杆量差异后继续','请选择图传类型并写入（或跳过）','全部勾选后即可放飞 🎉',
+];
+const warnBox=(h,amber)=>`<div class="warn-strip${amber?' amber':''}">${h}</div>`;
+const checkItem=(id,title,desc)=>`<label class="check" data-cid="${id}"><input type="checkbox" data-cid="${id}"><span class="t"><b>${title}</b><span>${desc}</span></span></label>`;
+const pv = n => { const p=FC.params.get(n); return p?p.value:undefined; };   /* 参数值 */
+const pvi = n => { const v=pv(n); return v===undefined?undefined:Math.round(v); }; /* 整数参数 */
+
+const R = [];
+/* ---- 0 接线 ---- */
+R[0]=()=>`
+<div class="step-hero"><div class="step-no">01</div><div><h2>开箱与接线检查 <span class="ref">说明书 P2–4</span></h2>
+<p>飞控出厂已配置好，开箱后先按清单确认接线，再通电。全部确认后才能进入下一步。</p></div></div>
+${warnBox('⚠️ <b>动力电池必须使用 6S 软包锂聚合物电池</b>，禁用 18650 电芯。&nbsp;&nbsp;⚠️ <b>禁止使用固定翼 MANUAL（手动）模式</b>。')}
+<div class="card"><h3>接线确认清单</h3><div id="wireList">
+${checkItem('elrs','ELRS 接收机接线 → 飞控 RX6 / TX6','随附 ELRS 连接线：黑=GND、红=V、白=TX、黄=RX，焊接后插入飞控 RX6、TX6。')}
+${checkItem('rx','SBUS / CRSF 接收机','如使用 SBUS 或 CRSF 接收机，按接口定义接入对应串口。')}
+${checkItem('vtx','图传系统（AV / DJI O3·O4 / Walksnail）','按图传类型接入中部专用接口，线缆沿机身右侧线槽走线并扣好盖板。')}
+${checkItem('gimbal','C20-T 云台（可选）','8P 专用线一头接云台 8P 口、一头接飞控左侧接口，沿右侧线槽走线。')}
+</div></div>
+<div class="card"><h3>飞控 UART 说明</h3>
+<p style="color:var(--dim);line-height:1.8;font-size:13px">飞控上标注的 <b style="color:var(--cyan)">TX x / RX x</b> 中的 <b style="color:var(--cyan)">x 即 UART 编号</b>（如 RX6/TX6 = 串口 6）。</p></div>`;
+
+/* ---- 1 连接 ---- */
+R[1]=()=>{
+  if(!FC.connected) return `
+<div class="step-hero"><div class="step-no">02</div><div><h2>连接飞控 <span class="ref">说明书 P5</span></h2>
+<p>用 Type-C 数据线连接飞控与电脑，点击连接。本向导通过 WebSerial 直连飞控收发 MAVLink，<b style="color:var(--cyan)">不需要安装 Mission Planner</b>。</p></div></div>
+${('serial' in navigator)?'':warnBox('⚠️ 当前浏览器不支持 WebSerial，请使用 <b>Chrome / Edge</b>（89+）打开本页面。')}
+<div class="card"><h3>连接</h3>
+  <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+    <button class="btn btn-next" id="btnConn" ${('serial' in navigator)?'':'disabled'}>🔌 连接飞控</button>
+    <button class="btn btn-prev" id="btnDemo">🎬 演示模式（无飞控预览）</button>
+  </div>
+  <div id="connProg" style="margin-top:14px"></div>
+  <p class="note">波特率 115200（ArduPilot USB 默认）。连接后自动下载全部参数（约 1000+ 个，需十几秒）。<br>提示：本页面可双击本地直接打开（file://），或部署到 HTTPS / localhost。</p>
+</div>
+<div class="card"><h3>本向导替代的 Mission Planner 功能</h3>
+<table class="map"><tr><th>MISSION PLANNER</th><th>本向导对应步骤</th></tr>
+<tr><td class="mp">连接飞控（MAVLink 串口）</td><td class="wz">→ 本步一键连接</td></tr>
+<tr><td class="mp">初始设置 → 遥控器校准</td><td class="wz">→ 步骤 03（真实写入 RCn_MIN/MAX/TRIM）</td></tr>
+<tr><td class="mp">配置 → 飞行模式</td><td class="wz">→ 步骤 04（读写 FLTMODE1–6）</td></tr>
+<tr><td class="mp">初始设置 → 电池监视器</td><td class="wz">→ 步骤 05（读写 BATT_CAPACITY）</td></tr>
+<tr><td class="mp">配置 → 全部参数表（空速计 / OSD）</td><td class="wz">→ 步骤 07、12（读写 ARSPD_* / MSP_OPTIONS）</td></tr>
+</table></div>`;
+  return `
+<div class="step-hero"><div class="step-no">02</div><div><h2>连接飞控 <span class="ref">说明书 P5</span></h2>
+<p style="color:var(--green)">✓ 已连接，心跳正常，参数表已下载。</p></div></div>
+<div class="card"><h3>飞控信息</h3>
+  <div class="kv"><span>固件</span><b>${FC.apName||'ArduPilot'} ${FC.fwVer||''}</b></div>
+  <div class="kv"><span>MAVLink 目标</span><b>sys ${MAV.targetSys} · comp ${MAV.targetComp}</b></div>
+  <div class="kv"><span>参数数量</span><b>${FC.params.size}</b></div>
+  <div class="kv"><span>当前模式</span><b>${modeName(FC.modeNum)}</b></div>
+  <div class="kv"><span>解锁状态</span><b class="${FC.armed?'bad':'ok'}">${FC.armed?'已解锁':'已上锁'}</b></div>
+  <div class="kv"><span>电池电压</span><b>${FC.voltage.toFixed(1)} V</b></div>
+  <div style="margin-top:14px;display:flex;gap:12px">
+    <button class="btn btn-prev btn-sm" id="btnReboot">🔄 重启飞控</button>
+    <span class="note" style="margin:0">部分参数（如串口/OSD）需重启生效。</span>
+  </div></div>
+<div class="card"><h3>飞控消息 <span style="font-size:11px;color:var(--dim2)">STATUSTEXT 实时</span></h3>
+  <div class="logbox" id="msgLog"></div></div>`;
+};
+
+/* ---- 2 遥控器校准 ---- */
+const RCN=['横滚','俯仰','油门','方向','—','模式','—','—'];
+R[2]=()=>`
+<div class="step-hero"><div class="step-no">03</div><div><h2>遥控器校准 <span class="ref">说明书 P6</span></h2>
+<p>点击开始后，把 CH1–CH4 摇杆打到最大最小行程转几圈、拨动所有开关；然后<b style="color:var(--amber)">所有摇杆回中（油门最低）</b>，点击完成并写入。向导将真实写入 <b style="color:var(--cyan)">RCn_MIN / MAX / TRIM</b>。</p></div></div>
+<div class="card"><h3>通道实时 <span style="font-size:11px;color:var(--dim2)">RC_CHANNELS</span></h3>
+<div id="chBars">${[1,2,3,4,5,6,7,8].map(i=>`
+<div class="ch-row"><div class="lb">CH${i} <b>${RCN[i-1]}</b></div>
+<div class="ch-bar"><div class="mid"></div><div class="fill" id="chf${i}"></div></div>
+<div class="ch-val" id="chv${i}">–</div></div>`).join('')}</div>
+<div style="margin-top:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+<button class="btn btn-next btn-sm" id="btnCalStart">🎯 开始校准</button>
+<button class="btn btn-next btn-sm" id="btnCalDone" disabled>💾 完成并写入飞控</button>
+<span id="calMsg" style="font-size:13px;color:var(--dim)"></span></div>
+<div class="grid4" id="calTrack" style="margin-top:14px"></div></div>
+<div class="card"><h3>当前飞控值</h3><div id="rcCur" class="grid4"></div>
+<p class="note">校准时不要碰微调。写入后建议重新上电验证。</p></div>`;
+
+/* ---- 3 飞行模式 ---- */
+R[3]=()=>`
+<div class="step-hero"><div class="step-no">04</div><div><h2>飞行模式设置 <span class="ref">说明书 P7–8</span></h2>
+<p>飞控默认把飞行模式分配在 <b style="color:var(--cyan)">CH6</b>（见下方 FLTMODE_CH 实测值）。建议三档：<b>QLOITER → CRUISE → RTL</b>，直接写入 <b style="color:var(--cyan)">FLTMODE1–6</b>。</p></div></div>
+${warnBox('⚠️ <b>CH6 不要配置给其他功能</b>，它已固定为飞行模式通道。',true)}
+<div class="card"><h3>模式通道</h3><div class="kv"><span>FLTMODE_CH（实测）</span><b id="fmCh">读取中…</b></div></div>
+<div class="card"><h3>六档模式映射</h3><div class="grid3" id="fmGrid"></div>
+<div style="margin-top:14px;display:flex;gap:12px;align-items:center">
+<button class="btn btn-next btn-sm" id="btnFmWrite">💾 写入飞控</button>
+<span id="fmMsg" style="font-size:13px;color:var(--dim)"></span></div>
+<p class="note">上电默认模式 = FLTMODE1（PWM 最低档）。新手请保持 QLOITER / CRUISE / RTL 组合。</p></div>`;
+
+/* ---- 4 电池 ---- */
+R[4]=()=>`
+<div class="step-hero"><div class="step-no">05</div><div><h2>电池设置 <span class="ref">说明书 P9</span></h2>
+<p>按电池实际容量填入，写入 <b style="color:var(--cyan)">BATT_CAPACITY</b>，飞控据此计算剩余电量与低电量告警。</p></div></div>
+${warnBox('⚠️ 动力电池<b>必须使用 6S 软包锂聚合物电池</b>，<b>禁用 18650 电芯</b>（放电能力不足，有断电风险）。')}
+<div class="card"><h3>电池容量</h3>
+<div class="grid2">
+<div><label class="f">BATT_CAPACITY（mAh）· 当前 <b id="battCur" style="color:var(--cyan)">–</b></label>
+<input class="inp" id="battInp" type="number" min="1000" max="30000" step="100"></div>
+<div><label class="f">实时电压（SYS_STATUS）</label>
+<div class="tile"><div class="v" id="voltTile">–</div><div class="k">V</div></div></div>
+</div>
+<div style="margin-top:14px;display:flex;gap:12px;align-items:center">
+<button class="btn btn-next btn-sm" id="btnBattWrite">💾 写入飞控</button>
+<span id="battMsg" style="font-size:13px;color:var(--dim)"></span></div></div>`;
+
+/* ---- 5 重心 ---- */
+R[5]=()=>`
+<div class="step-hero"><div class="step-no">06</div><div><h2>重心检查 <span class="ref">说明书 P11</span></h2>
+<p>把飞机托在机翼塑料件的刻痕处确认前后平衡。重心不对会显著影响操控手感，起飞前必须确认。</p></div></div>
+<div class="card"><h3>CG 平衡点示意</h3>
+<svg viewBox="0 0 600 190" style="width:100%;max-width:640px;display:block;margin:0 auto">
+<ellipse cx="300" cy="95" rx="270" ry="62" fill="#0e1a2e" stroke="#24344f" stroke-width="2"/>
+<ellipse cx="300" cy="95" rx="120" ry="40" fill="#13233c" stroke="#24344f"/>
+<line x1="300" y1="20" x2="300" y2="170" stroke="#22d3ee" stroke-width="2" stroke-dasharray="7 5"/>
+<circle cx="300" cy="95" r="9" fill="#22d3ee"/>
+<text x="300" y="200" text-anchor="middle" fill="#22d3ee" font-size="14">CG 刻痕位置</text>
+<line x1="300" y1="45" x2="340" y2="45" stroke="#fbbf24" stroke-width="2"/>
+<text x="352" y="49" fill="#fbbf24" font-size="12">允许向机头偏 ≤1cm</text>
+<text x="60" y="100" fill="#5c718c" font-size="12">← 机尾</text>
+<text x="500" y="100" fill="#5c718c" font-size="12">机头 →</text></svg>
+<p class="note" style="text-align:center">机翼塑料件上的凹痕即 CG 点；<b style="color:var(--amber)">允许向机头方向最大偏差 1cm</b>，偏向机尾则需前移电池。</p></div>
+<div class="card"><h3>确认</h3>
+${checkItem('cg','我已托举确认重心，重心位于刻痕处（或机头方向 1cm 内）','前后配平正常，无明显头重/尾重。')}
+</div>`;
+
+/* ---- 6 空速计 ---- */
+R[6]=()=>`
+<div class="step-hero"><div class="step-no">07</div><div><h2>空速计设置 <span class="ref">说明书 P12–13</span></h2>
+<p>根据机头罩类型选择，写入 <b style="color:var(--cyan)">ARSPD_RATIO / ARSPD_TYPE</b>。选错会导致空速读数不准，影响 CRUISE 油门控制。</p></div></div>
+<div class="card"><h3>当前值</h3>
+<div class="kv"><span>ARSPD_TYPE（0=禁用）</span><b id="arspdTypeCur">–</b></div>
+<div class="kv"><span>ARSPD_RATIO</span><b id="arspdRatioCur">–</b></div></div>
+<div class="card"><h3>机头罩类型</h3>
+<div class="grid3" id="noseOpts">
+<div class="opt" data-nose="std"><h4>📦 默认机头罩</h4><p>出厂标配，无需任何设置，保持当前参数。</p><span class="tag">推荐新手</span></div>
+<div class="opt" data-nose="hd"><h4>🎥 HD 云台机头罩</h4><p>需把空速计搬到机头罩顶部，并将空速缩放设为 <b>1.0</b>（ARSPD_RATIO）。</p><span class="tag warn">需动手改装</span></div>
+<div class="opt" data-nose="off"><h4>🚫 禁用空速计</h4><p>不想搬迁可直接禁用（ARSPD_TYPE=0）。<b>禁用不影响飞行性能</b>。</p></div>
+</div>
+<div id="noseDetail" style="margin-top:14px"></div>
+<div style="margin-top:14px;display:flex;gap:12px;align-items:center">
+<button class="btn btn-next btn-sm" id="btnArspd">💾 写入飞控</button>
+<span id="arspdMsg" style="font-size:13px;color:var(--dim)"></span></div></div>`;
+/* ---- 7 预热 ---- */
+R[7]=()=>`
+<div class="step-hero"><div class="step-no">08</div><div><h2>上电预热 <span class="ref">说明书 P14</span></h2>
+<p>接通电源后飞控初始化、传感器预热约 1 分钟，<b style="color:var(--red)">期间不要移动飞机</b>。下方 EKF 方差实时下降可作为客观参考，以<b>尾灯变绿</b>为准。</p></div></div>
+<div class="card"><h3>EKF 状态（实时）</h3>
+<div class="grid4">
+<div class="tile"><div class="v" id="ekfVv">–</div><div class="k">速度方差</div></div>
+<div class="tile"><div class="v" id="ekfPh">–</div><div class="k">水平位置方差</div></div>
+<div class="tile"><div class="v" id="ekfPv">–</div><div class="k">垂直位置方差</div></div>
+<div class="tile"><div class="v" id="ekfCv">–</div><div class="k">罗盘方差</div></div>
+</div><p class="note">方差持续下降并稳定在小数值，说明初始化正常。</p></div>
+<div class="card" style="text-align:center"><h3 style="justify-content:center">尾灯确认</h3>
+<div class="tail-light orange" id="tailLight"></div>
+<div style="font-size:15px;margin:10px 0;color:var(--amber)">已等待 <b id="preT" style="font-family:Consolas,monospace">0</b> 秒 · 建议等待约 60 秒</div>
+<button class="btn btn-next btn-sm" id="btnPreOk">🟢 尾灯已变绿，确认完成</button>
+<p class="note">预热完成前请勿解锁。</p></div>`;
+
+/* ---- 8 解锁/上锁 ---- */
+R[8]=()=>`
+<div class="step-hero"><div class="step-no">09</div><div><h2>解锁 / 上锁 <span class="ref">说明书 P15–16</span></h2>
+<p>在地面用遥控器练习解锁/上锁手势（<b style="color:var(--red)">确认桨叶安全</b>）。右侧实时显示飞控解锁状态；也可使用地面站辅助解锁。</p></div></div>
+<div class="grid2">
+<div class="card"><h3>摇杆手势</h3>
+<div class="sticks">
+<div class="stick"><div class="ch">CH3 油门</div><div class="knob" style="top:78%"></div><div class="lbl">↓ 最低</div></div>
+<div class="stick"><div class="ch">CH4 方向</div><div class="knob" style="left:78%"></div><div class="lbl">→ 最右保持 5 秒</div></div>
+</div>
+<p class="note" style="margin-top:30px"><b>解锁：</b>油门最低 + 方向右打保持约 5 秒 → 桨转后方向回中 → 白灯闪烁。<br><b>上锁：</b>油门最低 + <b>方向左打</b>保持约 5 秒 → 桨停后回中 → 白灯停止闪烁。</p></div>
+<div class="card"><h3>实时状态</h3>
+<div class="kv"><span>解锁状态</span><b id="armState">–</b></div>
+<div class="kv"><span>当前模式</span><b id="armMode">–</b></div>
+<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+<button class="btn btn-danger btn-sm" id="btnGcsArm">⚠️ 地面站解锁</button>
+<button class="btn btn-prev btn-sm" id="btnGcsDisarm">地面站上锁</button>
+</div>
+<p class="note">地面站解锁仅用于地面测试，<b style="color:var(--red)">务必确认桨叶无缠绕、周围无人</b>。</p>
+<div style="margin-top:10px"><button class="btn btn-next btn-sm" id="btnArmOk">✓ 我已在遥控器上完成解锁/上锁练习</button></div>
+</div></div>`;
+
+/* ---- 9 模式学习 ---- */
+R[9]=()=>`
+<div class="step-hero"><div class="step-no">10</div><div><h2>飞行模式学习 <span class="ref">说明书 P17–21 · 26</span></h2>
+<p>首飞只用 <b style="color:var(--cyan)">QLOITER</b>。了解其他模式的特性与限制后再尝试。</p></div></div>
+<div class="grid2">
+<div class="mode-card q"><div class="mn">QLOITER</div><div class="en">VTOL · 定点悬停</div><p>自动保持位置、航向、高度，像飞四轴一样操作；松杆即减速悬停。新手起飞/降落/练习都用它。</p></div>
+<div class="mode-card c"><div class="mn">CRUISE</div><div class="en">固定翼 · 巡航</div><p>类似 FBWB 带航向锁定，自动管理高度/空速/航向，适合远航 FPV。<b style="color:var(--red)">不适合低空、贴地飞行</b>（高度控制响应慢）。油门中位≈16m/s。</p></div>
+<div class="mode-card f"><div class="mn">FBWA</div><div class="en">固定翼 · 线传 A</div><p>新手最常用的辅助模式：杆量对应横滚/俯仰角度（±25°），油门手动。低于 12m/s 自动介入 VTOL 辅助。</p></div>
+<div class="mode-card r"><div class="mn">RTL</div><div class="en">一键返航降落</div><p>距家 75m 外：固定翼 100m 高度返航 → 50m 内盘旋降至 30m → 转 VTOL 逆风降落；75m 内：VTOL 直接回位降落。最后阶段可手动微调落点。</p></div>
+</div>
+<div style="text-align:center;margin-top:6px"><button class="btn btn-next btn-sm" id="btnModeRead">📖 我已了解各模式</button></div>`;
+
+/* ---- 10 操控说明 ---- */
+R[10]=()=>`
+<div class="step-hero"><div class="step-no">11</div><div><h2>遥控器操控说明 <span class="ref">说明书 P22–25</span></h2>
+<p>同一副摇杆在 VTOL 与固定翼模式下含义不同，切换模式前先在脑子里过一遍。</p></div></div>
+<div class="card"><h3>VTOL 模式（QLOITER）杆量</h3>
+<div class="grid2">
+<div class="kv"><span>CH3 油门</span><b>上升 / 下降</b></div>
+<div class="kv"><span>CH2 俯仰</span><b>前进 / 后退</b></div>
+<div class="kv"><span>CH1 横滚</span><b>左右平移（推荐转向）</b></div>
+<div class="kv"><span>CH4 方向</span><b>左右自旋（差速）</b></div></div>
+<p class="note">偏航靠左右桨差速实现，风大时响应会变弱，转向优先用 CH1 横滚。</p></div>
+<div class="card"><h3>固定翼模式（CRUISE / FBWA）杆量</h3>
+<div class="grid2">
+<div class="kv"><span>CH3 油门</span><b>空速（CRUISE 自动 / FBWA 手动）</b></div>
+<div class="kv"><span>CH2 俯仰</span><b>拉杆爬升 / 推杆下降</b></div>
+<div class="kv"><span>CH1 横滚</span><b>压杆转弯</b></div>
+<div class="kv"><span>CH4 方向</span><b>协调转弯 / 地面转向</b></div></div>
+${warnBox('⚠️ <b>CRUISE 不适合贴地飞行</b>：爬升/下降率被限制在 2m/s，低空没有足够的俯仰机动余量避障。',true)}</div>`;
+
+/* ---- 11 图传OSD ---- */
+R[11]=()=>`
+<div class="step-hero"><div class="step-no">12</div><div><h2>图传与云台 <span class="ref">说明书 P27–33</span></h2>
+<p>按图传类型写入 <b style="color:var(--cyan)">MSP_OPTIONS</b>，保证 DJI OSD 字符正常显示。云台通道请参照云台说明书设置。</p></div></div>
+<div class="card"><h3>当前值</h3><div class="kv"><span>MSP_OPTIONS</span><b id="mspCur">–</b></div></div>
+<div class="card"><h3>图传类型</h3>
+<div class="grid3" id="vtxOpts">
+<div class="opt" data-vtx="dji"><h4>📡 DJI O3 / O4</h4><p>MSP_OPTIONS = <b>4 或 12</b>。固件高于 4.6.3 时，眼镜端机型请选 <b>INAV</b> 而非 BF。</p></div>
+<div class="opt" data-vtx="ws"><h4>📺 Walksnail / 模拟</h4><p>AV 线接入图传，OSD 位置需手动配置；MSP_OPTIONS 保持 0。</p></div>
+<div class="opt" data-vtx="c20t"><h4>🎥 C20-T 云台</h4><p>飞控已预配置 MAVLink 透传；云台通道映射请参照 C20-T 说明书。</p></div>
+</div>
+<div style="margin-top:14px"><label class="f">MSP_OPTIONS 取值（DJI 用户）</label>
+<select class="inp" id="mspSel" style="max-width:280px"><option value="4">4</option><option value="12">12</option></select></div>
+<div style="margin-top:14px;display:flex;gap:12px;align-items:center">
+<button class="btn btn-next btn-sm" id="btnVtx">💾 写入飞控</button>
+<span id="vtxMsg" style="font-size:13px;color:var(--dim)"></span></div></div>`;
+
+/* ---- 12 起飞前检查 ---- */
+R[12]=()=>`
+<div class="step-hero"><div class="step-no">13</div><div><h2>起飞前检查</h2>
+<p>最后一遍确认，全部通过即可放飞。建议每次飞行前都走一遍本页。</p></div></div>
+<div class="card"><h3>实时遥测</h3>
+<div class="grid4">
+<div class="tile"><div class="v" id="tVolt">–</div><div class="k">电池电压 V</div></div>
+<div class="tile"><div class="v" id="tGps">–</div><div class="k">GPS 搜星</div></div>
+<div class="tile"><div class="v" id="tMode">–</div><div class="k">飞行模式</div></div>
+<div class="tile"><div class="v" id="tArm">–</div><div class="k">解锁状态</div></div>
+</div></div>
+<div class="card"><h3>放飞检查单</h3><div id="finalList">
+${checkItem('f1','电池已接好、电量充足，6S 软包','电压正常，无鼓包破损。')}
+${checkItem('f2','重心确认无误','CG 在刻痕处（机头方向 ≤1cm）。')}
+${checkItem('f3','遥控器已校准，CH6 三档 = QLOITER / CRUISE / RTL','上电默认 QLOITER。')}
+${checkItem('f4','预热完成，尾灯绿色','上电后静置约 1 分钟，期间未移动飞机。')}
+${checkItem('f5','GPS 已定位（室外）','等待搜星完成再解锁。')}
+${checkItem('f6','解锁手势熟练：油门最低 + 方向右 5 秒','桨转后方向回中，白灯闪烁。')}
+${checkItem('f7','空速计 / 图传设置与硬件一致','HD 头罩已搬迁或已禁用；OSD 正常。')}
+${checkItem('f8','场地空旷，远离人群与障碍物','首飞选择无风或微风天气。')}
+</div></div>
+<div id="finishBox"></div>`;
+
+/* ================= 渲染与导航 ================= */
+function renderRail(){
+  $('railSteps').innerHTML = STEPS.map((s,i)=>{
+    const cls = S.done.has(i)?'done':(i===S.step?'active':(i<=maxReached?'':'locked'));
+    const mark = S.done.has(i)?'✓':String(i+1).padStart(2,'0');
+    return `<div class="step ${cls}" data-i="${i}"><div class="num">${mark}</div><div class="tx"><b>${s.t}</b><span>${s.s}</span></div></div>`;
+  }).join('');
+  document.querySelectorAll('#railSteps .step').forEach(el=>{
+    el.onclick=()=>{ const i=+el.dataset.i; if(i<=maxReached){ S.step=i; render(); } };
+  });
+}
+function refreshTop(){
+  $('progTxt').textContent = S.done.size+' / '+TOTAL;
+  $('progFill').style.width = (S.done.size/TOTAL*100)+'%';
+  const c = FC.connected;
+  $('connDot').classList.toggle('on', c);
+  $('connTxt').textContent = c ? ('已连接'+(FC.demo?' · 演示':'')) : '未连接飞控';
+  $('btnDisc').style.display = c?'':'none';
+  $('modeBadge').style.display = (c&&FC.demo)?'':'none';
+}
+function render(){
+  cleaners.forEach(f=>f()); cleaners=[];
+  const i=S.step;
+  maxReached=Math.max(maxReached,i);
+  const body=$('stageBody');
+  body.classList.remove('step-fade'); void body.offsetWidth; body.classList.add('step-fade');
+  body.innerHTML=R[i]();
+  try{ bindStep(i); }catch(e){ body.innerHTML+=`<div class="warn-strip">⚠️ 本步加载异常：${e.message}</div>`; }
+  renderRail(); refreshTop();
+  $('btnPrev').disabled = i===0;
+  $('btnNext').disabled = !canNext[i]();
+  $('btnNext').innerHTML = i===TOTAL-1 ? '完成 🎉' : '下一步 →';
+  $('navHint').textContent = canNext[i]()?'':HINTS[i];
+  $('btnSkip').style.display = SKIPPABLE.has(i)&&!S.done.has(i) ? '' : 'none';
+  body.parentElement.scrollTop=0;
+}
+function markDone(i){ S.done.add(i); render(); }
+$('btnPrev').onclick=()=>{ if(S.step>0){ S.step--; render(); } };
+$('btnNext').onclick=()=>{ if(!canNext[S.step]())return; markDone(S.step); if(S.step<TOTAL-1){ S.step++; render(); } };
+$('btnSkip').onclick=()=>{ markDone(S.step); if(S.step<TOTAL-1){ S.step++; render(); } };
+$('btnDisc').onclick=async()=>{ await FC.disconnect(); refreshTop(); render(); };
+onFcGlobal();
+function onFcGlobal(){
+  FC.on('disconnect',()=>{ refreshTop(); $('navHint').textContent='⚠️ 飞控已断开，请返回第 2 步重新连接'; });
+  FC.on('heartbeat',()=>{ if(S.step===1||S.step===8||S.step===12) refreshTop(); });
+}
+/* ================= 各步事件绑定 ================= */
+function bindStep(i){
+  if(i===0){
+    S.wireOk=false;
+    document.querySelectorAll('#wireList input').forEach(cb=>{
+      cb.onchange=()=>{
+        cb.closest('.check').classList.toggle('done',cb.checked);
+        S.wireOk=[...document.querySelectorAll('#wireList input')].every(x=>x.checked);
+        $('btnNext').disabled=!canNext[0](); $('navHint').textContent=canNext[0]()?'':HINTS[0];
+      };
+    });
+  }
+
+  if(i===1){
+    if(!FC.connected){
+      const prog=$('connProg');
+      const cnt=()=>{ prog.innerHTML=`<span style="color:var(--cyan)"><span class="spin">⏳</span> 正在下载参数… ${FC._paramIdx.size} / ${FC.paramCount||'…'}</span>`; };
+      onFc('param',cnt);
+      $('btnConn').onclick=async()=>{
+        $('btnConn').disabled=true; $('btnDemo').disabled=true;
+        prog.innerHTML='<span style="color:var(--dim)"><span class="spin">⏳</span> 等待选择串口…</span>';
+        try{ await FC.connect(); refreshTop(); render(); }
+        catch(e){
+          prog.innerHTML=`<div class="warn-strip">⚠️ 连接失败：${String(e.message||e).replace(/</g,'&lt;')}<br><span style="color:var(--dim)">常见原因：浏览器未授权串口 / 飞控未上电 / USB 线仅充电无数据 / 串口被 Mission Planner 占用。</span></div>`;
+          $('btnConn').disabled=false; $('btnDemo').disabled=false;
+        }
+      };
+      $('btnDemo').onclick=async()=>{
+        $('btnConn').disabled=true; $('btnDemo').disabled=true;
+        prog.innerHTML='<span style="color:var(--dim)">正在加载演示数据…</span>';
+        await FC.connectDemo(); refreshTop(); render();
+      };
+    }else{
+      const log=$('msgLog');
+      const paint=()=>{ log.innerHTML=FC.msgs.map(m=>`<div class="${m.sev<=3?'err':m.sev===4?'warn':'ok'}">[${new Date(m.t).toLocaleTimeString()}] ${String(m.text).replace(/</g,'&lt;')}</div>`).join(''); log.scrollTop=log.scrollHeight; };
+      paint(); onFc('msg',paint);
+      $('btnReboot').onclick=()=>{ if(confirm('确定重启飞控吗？部分参数（如串口/OSD）需重启生效。')) FC.reboot(); };
+    }
+  }
+
+  if(i===2){
+    let track=null;
+    const paint=()=>{
+      for(let k=1;k<=8;k++){
+        const f=$('chf'+k); if(!f) return;
+        const v=FC.rc[k-1]||1500, pct=(v-1000)/1000*100;
+        f.style.left=Math.min(50,pct)+'%'; f.style.width=Math.abs(pct-50)+'%';
+        $('chv'+k).textContent=v;
+      }
+      if(track){
+        for(let k=0;k<8;k++){ const v=FC.rc[k]; if(v>900&&v<2100){ track.min[k]=Math.min(track.min[k],v); track.max[k]=Math.max(track.max[k],v); } }
+        $('calTrack').innerHTML=track.min.map((mn,k)=>`<div class="tile"><div class="v" style="font-size:13px">${mn>track.max[k]?'–':mn+'/'+track.max[k]}</div><div class="k">CH${k+1}</div></div>`).join('');
+      }
+    };
+    onFc('rc',paint); paint();
+    $('rcCur').innerHTML=[1,2,3,4,5,6,7,8].map(n=>`<div class="tile"><div class="v" style="font-size:12px">${pvi('RC'+n+'_MIN')??'–'} / ${pvi('RC'+n+'_MAX')??'–'} / ${pvi('RC'+n+'_TRIM')??'–'}</div><div class="k">CH${n} MIN/MAX/TRIM</div></div>`).join('');
+    $('btnCalStart').onclick=()=>{
+      track={min:new Array(8).fill(2000),max:new Array(8).fill(1000)};
+      $('btnCalStart').disabled=true; $('btnCalDone').disabled=false;
+      $('calMsg').innerHTML='<span style="color:var(--amber)">📡 记录中…摇杆打到极限转几圈，拨动所有开关</span>';
+    };
+    $('btnCalDone').onclick=async()=>{
+      if(!track) return;
+      $('btnCalDone').disabled=true;
+      $('calMsg').innerHTML='<span style="color:var(--amber)">💾 写入中…（摇杆已回中、油门最低）</span>';
+      try{
+        for(let n=1;n<=8;n++){
+          if(track.min[n-1]>track.max[n-1]) continue;   /* 该通道没动过则跳过 */
+          $('calMsg').textContent=`💾 正在写入 CH${n}…`;
+          await FC.setParam('RC'+n+'_MIN',track.min[n-1]);
+          await FC.setParam('RC'+n+'_MAX',track.max[n-1]);
+          await FC.setParam('RC'+n+'_TRIM',FC.rc[n-1]);
+        }
+        S.calibrated=true;
+        $('calMsg').innerHTML='<span style="color:var(--green)">✓ 校准完成，已写入 RCn_MIN / MAX / TRIM</span>';
+        $('btnNext').disabled=false; $('navHint').textContent='';
+      }catch(e){
+        $('calMsg').innerHTML=`<span style="color:var(--red)">⚠️ 写入失败：${String(e.message).replace(/</g,'&lt;')}</span>`;
+        $('btnCalDone').disabled=false;
+      }
+    };
+  }
+
+  if(i===3){
+    $('fmCh').textContent = pvi('FLTMODE_CH')===undefined?'读取失败':'CH'+pvi('FLTMODE_CH');
+    const cur=[]; for(let n=1;n<=6;n++) cur[n]=pvi('FLTMODE'+n);
+    $('fmGrid').innerHTML=[1,2,3,4,5,6].map(n=>`
+      <div><label class="f">FLTMODE${n}（第${n}档）· 当前 ${modeName(cur[n])}</label>
+      <select class="inp" data-fm="${n}">${Object.entries(PLANE_MODES).map(([k,v])=>`<option value="${k}" ${+k===(cur[n]??-1)?'selected':''}>${v}</option>`).join('')}</select></div>`).join('');
+    $('btnFmWrite').onclick=async()=>{
+      $('btnFmWrite').disabled=true; $('fmMsg').textContent='写入中…';
+      try{
+        for(let n=1;n<=6;n++) await FC.setParam('FLTMODE'+n, +document.querySelector(`[data-fm="${n}"]`).value);
+        S.modesDone=true;
+        $('fmMsg').innerHTML='<span style="color:var(--green)">✓ 已写入 FLTMODE1–6</span>';
+        $('btnNext').disabled=false; $('navHint').textContent='';
+      }catch(e){ $('fmMsg').innerHTML=`<span style="color:var(--red)">⚠️ ${String(e.message).replace(/</g,'&lt;')}</span>`; $('btnFmWrite').disabled=false; }
+    };
+  }
+
+  if(i===4){
+    const cur=pv('BATT_CAPACITY');
+    $('battCur').textContent=cur===undefined?'–':Math.round(cur);
+    $('battInp').value=cur===undefined?6000:Math.round(cur);
+    const upd=()=>{ $('voltTile').textContent=FC.voltage.toFixed(1); };
+    onFc('telemetry',upd); upd();
+    $('btnBattWrite').onclick=async()=>{
+      const v=+$('battInp').value;
+      if(!(v>=1000)){ $('battMsg').textContent='请输入有效容量'; return; }
+      $('btnBattWrite').disabled=true; $('battMsg').textContent='写入中…';
+      try{
+        await FC.setParam('BATT_CAPACITY',v); S.battDone=true;
+        $('battMsg').innerHTML=`<span style="color:var(--green)">✓ 已写入 BATT_CAPACITY=${v}</span>`;
+        $('btnNext').disabled=false; $('navHint').textContent='';
+      }catch(e){ $('battMsg').innerHTML=`<span style="color:var(--red)">⚠️ ${String(e.message).replace(/</g,'&lt;')}</span>`; $('btnBattWrite').disabled=false; }
+    };
+  }
+
+  if(i===5){
+    S.cgOk=false;
+    const cb=document.querySelector('#stageBody .check input');
+    cb.onchange=()=>{ S.cgOk=cb.checked; cb.closest('.check').classList.toggle('done',cb.checked);
+      $('btnNext').disabled=!S.cgOk; $('navHint').textContent=S.cgOk?'':HINTS[5]; };
+  }
+
+  if(i===6){
+    $('arspdTypeCur').textContent=pvi('ARSPD_TYPE')??'–';
+    const r=pv('ARSPD_RATIO'); $('arspdRatioCur').textContent=r===undefined?'–':r.toFixed(2);
+    let nose='std';
+    const det=$('noseDetail');
+    document.querySelectorAll('#noseOpts .opt').forEach(o=>{
+      o.onclick=()=>{
+        document.querySelectorAll('#noseOpts .opt').forEach(x=>x.classList.remove('sel'));
+        o.classList.add('sel'); nose=o.dataset.nose; S.arspdDone=false;
+        $('arspdMsg').textContent='';
+        det.innerHTML = nose==='hd'
+          ? `${warnBox('🔧 改装步骤：① 拆下空速计 → ② 拆机头罩 → ③ 线缆穿过机头罩走线 → ④ 把空速计固定到<b>机头罩顶部</b>。',true)}<p class="note">将写入：ARSPD_RATIO = <b style="color:var(--cyan)">1.0</b></p>`
+          : nose==='off' ? `<p class="note">将写入：ARSPD_TYPE = 0（禁用）。<b style="color:var(--green)">禁用不影响飞行性能</b>。</p>`
+          : `<p class="note" style="color:var(--green)">✓ 默认机头罩无需任何设置，保持当前参数。</p>`;
+        if(nose==='std'){ S.arspdDone=true; }
+        $('btnNext').disabled=!canNext[6](); $('navHint').textContent=canNext[6]()?'':HINTS[6];
+      };
+    });
+    document.querySelector('#noseOpts .opt').click();
+    $('btnArspd').onclick=async()=>{
+      $('btnArspd').disabled=true; $('arspdMsg').textContent='写入中…';
+      try{
+        if(nose==='hd') await FC.setParam('ARSPD_RATIO',1.0);
+        else if(nose==='off') await FC.setParam('ARSPD_TYPE',0);
+        S.arspdDone=true;
+        $('arspdMsg').innerHTML='<span style="color:var(--green)">✓ 已写入飞控</span>';
+        $('btnNext').disabled=false; $('navHint').textContent='';
+      }catch(e){ $('arspdMsg').innerHTML=`<span style="color:var(--red)">⚠️ ${String(e.message).replace(/</g,'&lt;')}</span>`; }
+      $('btnArspd').disabled=false;
+    };
+  }
+
+  if(i===7){
+    const t0=Date.now();
+    every(500,()=>{
+      const e=FC.ekf;
+      $('ekfVv').textContent=e.vv.toFixed(3); $('ekfPh').textContent=e.ph.toFixed(3);
+      $('ekfPv').textContent=e.pv.toFixed(3); $('ekfCv').textContent=e.cv.toFixed(3);
+      const s=Math.floor((Date.now()-t0)/1000); const el=$('preT'); if(el) el.textContent=s;
+    });
+    $('btnPreOk').onclick=()=>{
+      S.preheatOk=true;
+      $('tailLight').classList.remove('orange'); $('tailLight').classList.add('green');
+      $('btnPreOk').disabled=true; $('btnPreOk').textContent='✓ 预热完成';
+      $('btnNext').disabled=false; $('navHint').textContent='';
+    };
+  }
+
+  if(i===8){
+    const upd=()=>{
+      const a=$('armState'); if(!a) return;
+      a.textContent=FC.armed?'已解锁':'已上锁'; a.className=FC.armed?'bad':'ok';
+      $('armMode').textContent=modeName(FC.modeNum);
+      if(FC.armed&&!S.armOk){ S.armOk=true; $('btnNext').disabled=false; $('navHint').textContent='';
+        $('btnArmOk').textContent='✓ 已检测到解锁'; $('btnArmOk').disabled=true; }
+    };
+    onFc('heartbeat',upd); every(1000,upd); upd();
+    $('btnGcsArm').onclick=()=>{ if(confirm('⚠️ 确认地面站解锁吗？\n\n请确保：\n1. 桨叶无缠绕、周围无人\n2. 飞机已放置稳妥')) FC.arm(true).catch(e=>alert(e.message)); };
+    $('btnGcsDisarm').onclick=()=>{ FC.arm(false).catch(e=>alert(e.message)); };
+    $('btnArmOk').onclick=()=>{ S.armOk=true; $('btnArmOk').disabled=true; $('btnArmOk').textContent='✓ 已完成练习';
+      $('btnNext').disabled=false; $('navHint').textContent=''; };
+  }
+
+  if(i===9){
+    $('btnModeRead').onclick=()=>{ S.modeRead=true; $('btnModeRead').disabled=true; $('btnModeRead').textContent='✓ 已学习';
+      $('btnNext').disabled=false; $('navHint').textContent=''; };
+  }
+
+  if(i===11){
+    $('mspCur').textContent=pvi('MSP_OPTIONS')??'–';
+    let sel='dji';
+    document.querySelectorAll('#vtxOpts .opt').forEach(o=>{
+      o.onclick=()=>{
+        document.querySelectorAll('#vtxOpts .opt').forEach(x=>x.classList.remove('sel'));
+        o.classList.add('sel'); sel=o.dataset.vtx; S.vtxDone=false; $('vtxMsg').textContent='';
+        $('btnNext').disabled=true; $('navHint').textContent=HINTS[11];
+      };
+    });
+    document.querySelector('#vtxOpts .opt').click();
+    $('btnVtx').onclick=async()=>{
+      $('btnVtx').disabled=true; $('vtxMsg').textContent='写入中…';
+      try{
+        if(sel==='dji') await FC.setParam('MSP_OPTIONS',+$('mspSel').value);
+        else if(sel==='ws') await FC.setParam('MSP_OPTIONS',0);
+        S.vtxDone=true;
+        $('vtxMsg').innerHTML='<span style="color:var(--green)">✓ 已写入飞控</span>';
+        $('btnNext').disabled=false; $('navHint').textContent='';
+      }catch(e){ $('vtxMsg').innerHTML=`<span style="color:var(--red)">⚠️ ${String(e.message).replace(/</g,'&lt;')}</span>`; }
+      $('btnVtx').disabled=false;
+    };
+  }
+
+  if(i===12){
+    const upd=()=>{
+      const t=$('tVolt'); if(!t) return;
+      t.textContent=FC.voltage.toFixed(1);
+      const g=$('tGps'); g.textContent=FC.sats+'颗'; g.className='v '+(FC.gpsFix>=3?'ok':'warnv');
+      $('tMode').textContent=modeName(FC.modeNum); $('tMode').style.fontSize='14px';
+      const a=$('tArm'); a.textContent=FC.armed?'已解锁':'已上锁'; a.className='v '+(FC.armed?'bad':'ok');
+    };
+    onFc('telemetry',upd); onFc('heartbeat',upd); every(1000,upd); upd();
+    const all=[...document.querySelectorAll('#finalList input')];
+    const box=$('finishBox');
+    const refresh=()=>{
+      const n=all.filter(x=>x.checked).length;
+      all.forEach(cb=>cb.closest('.check').classList.toggle('done',cb.checked));
+      if(n===all.length&&!box.innerHTML){
+        const fm=[1,2,3,4,5,6].map(k=>modeName(pvi('FLTMODE'+k))).join(' / ');
+        box.innerHTML=`<div class="card finish"><div class="big">🎉</div><h2>配置完成，可以飞行！</h2>
+        <p>六档模式：${fm}　·　电池 ${Math.round(pv('BATT_CAPACITY')||0)}mAh　·　MSP_OPTIONS=${pvi('MSP_OPTIONS')??'–'}<br>
+        首飞建议：空旷场地 · 微风 · QLOITER 起飞 · 先悬停熟悉杆量</p>
+        <div style="margin-top:16px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-prev btn-sm" id="btnFinReboot">🔄 重启飞控</button>
+        <button class="btn btn-next btn-sm" id="btnExport">📄 导出配置摘要</button></div>
+        <p class="note">部分参数需重启飞控生效，建议重启后再验证一次。</p></div>`;
+        $('btnFinReboot').onclick=()=>{ if(confirm('确定重启飞控吗？')) FC.reboot(); };
+        $('btnExport').onclick=()=>{
+          const L=['ROC Wing 配置摘要 '+new Date().toLocaleString(),''];
+          ['FLTMODE_CH','FLTMODE1','FLTMODE2','FLTMODE3','FLTMODE4','FLTMODE5','FLTMODE6','BATT_CAPACITY','ARSPD_TYPE','ARSPD_RATIO','MSP_OPTIONS','Q_TILT_TYPE']
+            .forEach(k=>{ const p=FC.params.get(k); L.push(k+' = '+(p?p.value:'?')); });
+          const a=document.createElement('a');
+          a.href=URL.createObjectURL(new Blob([L.join('\n')],{type:'text/plain'}));
+          a.download='roc-wing-config.txt'; a.click();
+        };
+      }else if(n<all.length) box.innerHTML='';
+    };
+    all.forEach(cb=>cb.onchange=refresh);
+  }
+}
+
+/* ================= 启动 ================= */
+render();
+</script>
+</body>
+</html>
