@@ -543,16 +543,15 @@ onMsg(148,(p)=>{                  /* AUTOPILOT_VERSION：flight_sw_version 在 @
 onMsg(77,()=>{});
 /* ================= 向导 UI ================= */
 const S = { step:0, done:new Set(), wireOk:false, calibrated:false, modesDone:false,
-  battDone:false, cgOk:false, arspdDone:false, preheatOk:false, armOk:false,
+  battDone:false, arspdDone:false, preheatOk:false, armOk:false,
   modeRead:false, vtxDone:false };
-const TOTAL = 13;
+const TOTAL = 12;
 const STEPS = [
   {t:'开箱与接线检查', s:'ELRS / 图传 / 云台接线', ref:'P2–4'},
   {t:'连接飞控', s:'USB 直连 · 下载参数', ref:'P5'},
-  {t:'遥控器校准', s:'8 通道行程校准', ref:'P6'},
+  {t:'遥控器校准', s:'16 通道行程校准', ref:'P6'},
   {t:'飞行模式设置', s:'CH6 三档开关', ref:'P7–8'},
   {t:'电池设置', s:'容量与电压确认', ref:'P9'},
-  {t:'重心检查', s:'CG 平衡点确认', ref:'P11'},
   {t:'空速计设置', s:'机头罩类型 · 缩放系数', ref:'P12–13'},
   {t:'上电预热', s:'EKF 收敛 · 尾灯变绿', ref:'P14'},
   {t:'解锁 / 上锁', s:'摇杆手势 · 状态确认', ref:'P15–16'},
@@ -561,7 +560,7 @@ const STEPS = [
   {t:'图传与云台', s:'OSD · DJI / C20-T', ref:'P27–33'},
   {t:'起飞前检查', s:'实时遥测 · 放飞', ref:'—'},
 ];
-const SKIPPABLE = new Set([2,3,4,6,11]);
+const SKIPPABLE = new Set([0,2,3,4,5,10]);
 let maxReached = 0, cleaners = [];
 const later = fn => cleaners.push(fn);
 const onFc = (e,f) => { FC.on(e,f); later(()=>FC.off(e,f)); };
@@ -573,7 +572,6 @@ const canNext = [
   ()=>S.calibrated,
   ()=>S.modesDone,
   ()=>S.battDone,
-  ()=>S.cgOk,
   ()=>S.arspdDone,
   ()=>S.preheatOk,
   ()=>S.armOk,
@@ -584,7 +582,7 @@ const canNext = [
 ];
 const HINTS = [
   '请勾选全部接线项后继续','请先连接飞控并等待参数下载完成','请完成遥控器校准（或跳过）',
-  '请写入飞行模式（或跳过）','请写入电池容量（或跳过）','请确认重心',
+  '请写入飞行模式（或跳过）','请写入电池容量（或跳过）',
   '请选择机头罩类型并写入（或跳过）','请确认预热完成','请完成解锁/上锁确认',
   '请阅读各模式说明','了解杆量差异后继续','请选择图传类型并写入（或跳过）','全部勾选后即可放飞 🎉',
 ];
@@ -649,15 +647,16 @@ ${('serial' in navigator)?'':warnBox('⚠️ 当前浏览器不支持 WebSerial�
 };
 
 /* ---- 2 遥控器校准 ---- */
-const RCN=['横滚','俯仰','油门','方向','—','模式','—','—'];
+const RCN=['横滚','俯仰','油门','方向','—','模式','—','—','—','—','—','—','—','—','—','—'];
+const chRow=i=>`<div class="ch-row"><div class="lb">CH${i} <b>${RCN[i-1]}</b></div><div class="ch-bar"><div class="mid"></div><div class="fill" id="chf${i}"></div></div><div class="ch-val" id="chv${i}">–</div></div>`;
 R[2]=()=>`
 <div class="step-hero"><div class="step-no">03</div><div><h2>遥控器校准 <span class="ref">说明书 P6</span></h2>
-<p>点击开始后，把 CH1–CH4 摇杆打到最大最小行程转几圈、拨动所有开关；然后<b style="color:var(--amber)">所有摇杆回中（油门最低）</b>，点击完成并写入。向导将真实写入 <b style="color:var(--cyan)">RCn_MIN / MAX / TRIM</b>。</p></div></div>
-<div class="card"><h3>通道实时 <span style="font-size:11px;color:var(--dim2)">RC_CHANNELS</span></h3>
-<div id="chBars">${[1,2,3,4,5,6,7,8].map(i=>`
-<div class="ch-row"><div class="lb">CH${i} <b>${RCN[i-1]}</b></div>
-<div class="ch-bar"><div class="mid"></div><div class="fill" id="chf${i}"></div></div>
-<div class="ch-val" id="chv${i}">–</div></div>`).join('')}</div>
+<p>点击开始后，把 CH1–CH4 摇杆打到最大最小行程转几圈、拨动所有开关；然后<b style="color:var(--amber)">所有摇杆回中（油门最低）</b>，点击完成并写入。向导将真实写入 <b style="color:var(--cyan)">RCn_MIN / MAX / TRIM</b>（CH1–CH16）。</p></div></div>
+<div class="card"><h3>通道实时 <span style="font-size:11px;color:var(--dim2)">RC_CHANNELS · 16 通道</span></h3>
+<div class="grid2">
+<div>${[1,2,3,4,5,6,7,8].map(chRow).join('')}</div>
+<div>${[9,10,11,12,13,14,15,16].map(chRow).join('')}</div>
+</div>
 <div style="margin-top:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
 <button class="btn btn-next btn-sm" id="btnCalStart">🎯 开始校准</button>
 <button class="btn btn-next btn-sm" id="btnCalDone" disabled>💾 完成并写入飞控</button>
@@ -694,46 +693,26 @@ ${warnBox('⚠️ 动力电池<b>必须使用 6S 软包锂聚合物电池</b>，
 <button class="btn btn-next btn-sm" id="btnBattWrite">💾 写入飞控</button>
 <span id="battMsg" style="font-size:13px;color:var(--dim)"></span></div></div>`;
 
-/* ---- 5 重心 ---- */
-R[5]=()=>`
-<div class="step-hero"><div class="step-no">06</div><div><h2>重心检查 <span class="ref">说明书 P11</span></h2>
-<p>把飞机托在机翼塑料件的刻痕处确认前后平衡。重心不对会显著影响操控手感，起飞前必须确认。</p></div></div>
-<div class="card"><h3>CG 平衡点示意</h3>
-<svg viewBox="0 0 600 190" style="width:100%;max-width:640px;display:block;margin:0 auto">
-<ellipse cx="300" cy="95" rx="270" ry="62" fill="#0e1a2e" stroke="#24344f" stroke-width="2"/>
-<ellipse cx="300" cy="95" rx="120" ry="40" fill="#13233c" stroke="#24344f"/>
-<line x1="300" y1="20" x2="300" y2="170" stroke="#22d3ee" stroke-width="2" stroke-dasharray="7 5"/>
-<circle cx="300" cy="95" r="9" fill="#22d3ee"/>
-<text x="300" y="200" text-anchor="middle" fill="#22d3ee" font-size="14">CG 刻痕位置</text>
-<line x1="300" y1="45" x2="340" y2="45" stroke="#fbbf24" stroke-width="2"/>
-<text x="352" y="49" fill="#fbbf24" font-size="12">允许向机头偏 ≤1cm</text>
-<text x="60" y="100" fill="#5c718c" font-size="12">← 机尾</text>
-<text x="500" y="100" fill="#5c718c" font-size="12">机头 →</text></svg>
-<p class="note" style="text-align:center">机翼塑料件上的凹痕即 CG 点；<b style="color:var(--amber)">允许向机头方向最大偏差 1cm</b>，偏向机尾则需前移电池。</p></div>
-<div class="card"><h3>确认</h3>
-${checkItem('cg','我已托举确认重心，重心位于刻痕处（或机头方向 1cm 内）','前后配平正常，无明显头重/尾重。')}
-</div>`;
 
-/* ---- 6 空速计 ---- */
-R[6]=()=>`
-<div class="step-hero"><div class="step-no">07</div><div><h2>空速计设置 <span class="ref">说明书 P12–13</span></h2>
+/* ---- 5 空速计 ---- */
+R[5]=()=>`
+<div class="step-hero"><div class="step-no">06</div><div><h2>空速计设置 <span class="ref">说明书 P12–13</span></h2>
 <p>根据机头罩类型选择，写入 <b style="color:var(--cyan)">ARSPD_RATIO / ARSPD_TYPE</b>。选错会导致空速读数不准，影响 CRUISE 油门控制。</p></div></div>
 <div class="card"><h3>当前值</h3>
 <div class="kv"><span>ARSPD_TYPE（0=禁用）</span><b id="arspdTypeCur">–</b></div>
 <div class="kv"><span>ARSPD_RATIO</span><b id="arspdRatioCur">–</b></div></div>
 <div class="card"><h3>机头罩类型</h3>
-<div class="grid3" id="noseOpts">
+<div class="grid2" id="noseOpts">
 <div class="opt" data-nose="std"><h4>📦 默认机头罩</h4><p>出厂标配，无需任何设置，保持当前参数。</p><span class="tag">推荐新手</span></div>
 <div class="opt" data-nose="hd"><h4>🎥 HD 云台机头罩</h4><p>需把空速计搬到机头罩顶部，并将空速缩放设为 <b>1.0</b>（ARSPD_RATIO）。</p><span class="tag warn">需动手改装</span></div>
-<div class="opt" data-nose="off"><h4>🚫 禁用空速计</h4><p>不想搬迁可直接禁用（ARSPD_TYPE=0）。<b>禁用不影响飞行性能</b>。</p></div>
 </div>
 <div id="noseDetail" style="margin-top:14px"></div>
 <div style="margin-top:14px;display:flex;gap:12px;align-items:center">
 <button class="btn btn-next btn-sm" id="btnArspd">💾 写入飞控</button>
 <span id="arspdMsg" style="font-size:13px;color:var(--dim)"></span></div></div>`;
-/* ---- 7 预热 ---- */
-R[7]=()=>`
-<div class="step-hero"><div class="step-no">08</div><div><h2>上电预热 <span class="ref">说明书 P14</span></h2>
+/* ---- 6 预热 ---- */
+R[6]=()=>`
+<div class="step-hero"><div class="step-no">07</div><div><h2>上电预热 <span class="ref">说明书 P14</span></h2>
 <p>接通电源后飞控初始化、传感器预热约 1 分钟，<b style="color:var(--red)">期间不要移动飞机</b>。下方 EKF 方差实时下降可作为客观参考，以<b>尾灯变绿</b>为准。</p></div></div>
 <div class="card"><h3>EKF 状态（实时）</h3>
 <div class="grid4">
@@ -748,9 +727,9 @@ R[7]=()=>`
 <button class="btn btn-next btn-sm" id="btnPreOk">🟢 尾灯已变绿，确认完成</button>
 <p class="note">预热完成前请勿解锁。</p></div>`;
 
-/* ---- 8 解锁/上锁 ---- */
-R[8]=()=>`
-<div class="step-hero"><div class="step-no">09</div><div><h2>解锁 / 上锁 <span class="ref">说明书 P15–16</span></h2>
+/* ---- 7 解锁/上锁 ---- */
+R[7]=()=>`
+<div class="step-hero"><div class="step-no">08</div><div><h2>解锁 / 上锁 <span class="ref">说明书 P15–16</span></h2>
 <p>在地面用遥控器练习解锁/上锁手势（<b style="color:var(--red)">确认桨叶安全</b>）。右侧实时显示飞控解锁状态；也可使用地面站辅助解锁。</p></div></div>
 <div class="grid2">
 <div class="card"><h3>摇杆手势</h3>
@@ -770,9 +749,9 @@ R[8]=()=>`
 <div style="margin-top:10px"><button class="btn btn-next btn-sm" id="btnArmOk">✓ 我已在遥控器上完成解锁/上锁练习</button></div>
 </div></div>`;
 
-/* ---- 9 模式学习 ---- */
-R[9]=()=>`
-<div class="step-hero"><div class="step-no">10</div><div><h2>飞行模式学习 <span class="ref">说明书 P17–21 · 26</span></h2>
+/* ---- 8 模式学习 ---- */
+R[8]=()=>`
+<div class="step-hero"><div class="step-no">09</div><div><h2>飞行模式学习 <span class="ref">说明书 P17–21 · 26</span></h2>
 <p>首飞只用 <b style="color:var(--cyan)">QLOITER</b>。了解其他模式的特性与限制后再尝试。</p></div></div>
 <div class="grid2">
 <div class="mode-card q"><div class="mn">QLOITER</div><div class="en">VTOL · 定点悬停</div><p>自动保持位置、航向、高度，像飞四轴一样操作；松杆即减速悬停。新手起飞/降落/练习都用它。</p></div>
@@ -782,9 +761,9 @@ R[9]=()=>`
 </div>
 <div style="text-align:center;margin-top:6px"><button class="btn btn-next btn-sm" id="btnModeRead">📖 我已了解各模式</button></div>`;
 
-/* ---- 10 操控说明 ---- */
-R[10]=()=>`
-<div class="step-hero"><div class="step-no">11</div><div><h2>遥控器操控说明 <span class="ref">说明书 P22–25</span></h2>
+/* ---- 9 操控说明 ---- */
+R[9]=()=>`
+<div class="step-hero"><div class="step-no">10</div><div><h2>遥控器操控说明 <span class="ref">说明书 P22–25</span></h2>
 <p>同一副摇杆在 VTOL 与固定翼模式下含义不同，切换模式前先在脑子里过一遍。</p></div></div>
 <div class="card"><h3>VTOL 模式（QLOITER）杆量</h3>
 <div class="grid2">
@@ -801,9 +780,9 @@ R[10]=()=>`
 <div class="kv"><span>CH4 方向</span><b>协调转弯 / 地面转向</b></div></div>
 ${warnBox('⚠️ <b>CRUISE 不适合贴地飞行</b>：爬升/下降率被限制在 2m/s，低空没有足够的俯仰机动余量避障。',true)}</div>`;
 
-/* ---- 11 图传OSD ---- */
-R[11]=()=>`
-<div class="step-hero"><div class="step-no">12</div><div><h2>图传与云台 <span class="ref">说明书 P27–33</span></h2>
+/* ---- 10 图传OSD ---- */
+R[10]=()=>`
+<div class="step-hero"><div class="step-no">11</div><div><h2>图传与云台 <span class="ref">说明书 P27–33</span></h2>
 <p>按图传类型写入 <b style="color:var(--cyan)">MSP_OPTIONS</b>，保证 DJI OSD 字符正常显示。云台通道请参照云台说明书设置。</p></div></div>
 <div class="card"><h3>当前值</h3><div class="kv"><span>MSP_OPTIONS</span><b id="mspCur">–</b></div></div>
 <div class="card"><h3>图传类型</h3>
@@ -818,9 +797,9 @@ R[11]=()=>`
 <button class="btn btn-next btn-sm" id="btnVtx">💾 写入飞控</button>
 <span id="vtxMsg" style="font-size:13px;color:var(--dim)"></span></div></div>`;
 
-/* ---- 12 起飞前检查 ---- */
-R[12]=()=>`
-<div class="step-hero"><div class="step-no">13</div><div><h2>起飞前检查</h2>
+/* ---- 11 起飞前检查 ---- */
+R[11]=()=>`
+<div class="step-hero"><div class="step-no">12</div><div><h2>起飞前检查</h2>
 <p>最后一遍确认，全部通过即可放飞。建议每次飞行前都走一遍本页。</p></div></div>
 <div class="card"><h3>实时遥测</h3>
 <div class="grid4">
@@ -930,21 +909,21 @@ function bindStep(i){
   if(i===2){
     let track=null;
     const paint=()=>{
-      for(let k=1;k<=8;k++){
+      for(let k=1;k<=16;k++){
         const f=$('chf'+k); if(!f) return;
         const v=FC.rc[k-1]||1500, pct=(v-1000)/1000*100;
         f.style.left=Math.min(50,pct)+'%'; f.style.width=Math.abs(pct-50)+'%';
         $('chv'+k).textContent=v;
       }
       if(track){
-        for(let k=0;k<8;k++){ const v=FC.rc[k]; if(v>900&&v<2100){ track.min[k]=Math.min(track.min[k],v); track.max[k]=Math.max(track.max[k],v); } }
+        for(let k=0;k<16;k++){ const v=FC.rc[k]; if(v>900&&v<2100){ track.min[k]=Math.min(track.min[k],v); track.max[k]=Math.max(track.max[k],v); } }
         $('calTrack').innerHTML=track.min.map((mn,k)=>`<div class="tile"><div class="v" style="font-size:13px">${mn>track.max[k]?'–':mn+'/'+track.max[k]}</div><div class="k">CH${k+1}</div></div>`).join('');
       }
     };
     onFc('rc',paint); paint();
-    $('rcCur').innerHTML=[1,2,3,4,5,6,7,8].map(n=>`<div class="tile"><div class="v" style="font-size:12px">${pvi('RC'+n+'_MIN')??'–'} / ${pvi('RC'+n+'_MAX')??'–'} / ${pvi('RC'+n+'_TRIM')??'–'}</div><div class="k">CH${n} MIN/MAX/TRIM</div></div>`).join('');
+    $('rcCur').innerHTML=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16].map(n=>`<div class="tile"><div class="v" style="font-size:12px">${pvi('RC'+n+'_MIN')??'–'} / ${pvi('RC'+n+'_MAX')??'–'} / ${pvi('RC'+n+'_TRIM')??'–'}</div><div class="k">CH${n} MIN/MAX/TRIM</div></div>`).join('');
     $('btnCalStart').onclick=()=>{
-      track={min:new Array(8).fill(2000),max:new Array(8).fill(1000)};
+      track={min:new Array(16).fill(2000),max:new Array(16).fill(1000)};
       $('btnCalStart').disabled=true; $('btnCalDone').disabled=false;
       $('calMsg').innerHTML='<span style="color:var(--amber)">📡 记录中…摇杆打到极限转几圈，拨动所有开关</span>';
     };
@@ -953,7 +932,7 @@ function bindStep(i){
       $('btnCalDone').disabled=true;
       $('calMsg').innerHTML='<span style="color:var(--amber)">💾 写入中…（摇杆已回中、油门最低）</span>';
       try{
-        for(let n=1;n<=8;n++){
+        for(let n=1;n<=16;n++){
           if(track.min[n-1]>track.max[n-1]) continue;   /* 该通道没动过则跳过 */
           $('calMsg').textContent=`💾 正在写入 CH${n}…`;
           await FC.setParam('RC'+n+'_MIN',track.min[n-1]);
@@ -1006,13 +985,6 @@ function bindStep(i){
   }
 
   if(i===5){
-    S.cgOk=false;
-    const cb=document.querySelector('#stageBody .check input');
-    cb.onchange=()=>{ S.cgOk=cb.checked; cb.closest('.check').classList.toggle('done',cb.checked);
-      $('btnNext').disabled=!S.cgOk; $('navHint').textContent=S.cgOk?'':HINTS[5]; };
-  }
-
-  if(i===6){
     $('arspdTypeCur').textContent=pvi('ARSPD_TYPE')??'–';
     const r=pv('ARSPD_RATIO'); $('arspdRatioCur').textContent=r===undefined?'–':r.toFixed(2);
     let nose='std';
@@ -1024,10 +996,9 @@ function bindStep(i){
         $('arspdMsg').textContent='';
         det.innerHTML = nose==='hd'
           ? `${warnBox('🔧 改装步骤：① 拆下空速计 → ② 拆机头罩 → ③ 线缆穿过机头罩走线 → ④ 把空速计固定到<b>机头罩顶部</b>。',true)}<p class="note">将写入：ARSPD_RATIO = <b style="color:var(--cyan)">1.0</b></p>`
-          : nose==='off' ? `<p class="note">将写入：ARSPD_TYPE = 0（禁用）。<b style="color:var(--green)">禁用不影响飞行性能</b>。</p>`
           : `<p class="note" style="color:var(--green)">✓ 默认机头罩无需任何设置，保持当前参数。</p>`;
         if(nose==='std'){ S.arspdDone=true; }
-        $('btnNext').disabled=!canNext[6](); $('navHint').textContent=canNext[6]()?'':HINTS[6];
+        $('btnNext').disabled=!canNext[5](); $('navHint').textContent=canNext[5]()?'':HINTS[5];
       };
     });
     document.querySelector('#noseOpts .opt').click();
@@ -1035,7 +1006,6 @@ function bindStep(i){
       $('btnArspd').disabled=true; $('arspdMsg').textContent='写入中…';
       try{
         if(nose==='hd') await FC.setParam('ARSPD_RATIO',1.0);
-        else if(nose==='off') await FC.setParam('ARSPD_TYPE',0);
         S.arspdDone=true;
         $('arspdMsg').innerHTML='<span style="color:var(--green)">✓ 已写入飞控</span>';
         $('btnNext').disabled=false; $('navHint').textContent='';
@@ -1044,7 +1014,7 @@ function bindStep(i){
     };
   }
 
-  if(i===7){
+  if(i===6){
     const t0=Date.now();
     every(500,()=>{
       const e=FC.ekf;
@@ -1060,7 +1030,7 @@ function bindStep(i){
     };
   }
 
-  if(i===8){
+  if(i===7){
     const upd=()=>{
       const a=$('armState'); if(!a) return;
       a.textContent=FC.armed?'已解锁':'已上锁'; a.className=FC.armed?'bad':'ok';
@@ -1075,19 +1045,19 @@ function bindStep(i){
       $('btnNext').disabled=false; $('navHint').textContent=''; };
   }
 
-  if(i===9){
+  if(i===8){
     $('btnModeRead').onclick=()=>{ S.modeRead=true; $('btnModeRead').disabled=true; $('btnModeRead').textContent='✓ 已学习';
       $('btnNext').disabled=false; $('navHint').textContent=''; };
   }
 
-  if(i===11){
+  if(i===10){
     $('mspCur').textContent=pvi('MSP_OPTIONS')??'–';
     let sel='dji';
     document.querySelectorAll('#vtxOpts .opt').forEach(o=>{
       o.onclick=()=>{
         document.querySelectorAll('#vtxOpts .opt').forEach(x=>x.classList.remove('sel'));
         o.classList.add('sel'); sel=o.dataset.vtx; S.vtxDone=false; $('vtxMsg').textContent='';
-        $('btnNext').disabled=true; $('navHint').textContent=HINTS[11];
+        $('btnNext').disabled=true; $('navHint').textContent=HINTS[10];
       };
     });
     document.querySelector('#vtxOpts .opt').click();
@@ -1104,7 +1074,7 @@ function bindStep(i){
     };
   }
 
-  if(i===12){
+  if(i===11){
     const upd=()=>{
       const t=$('tVolt'); if(!t) return;
       t.textContent=FC.voltage.toFixed(1);
