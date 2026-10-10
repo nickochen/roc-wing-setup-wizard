@@ -743,7 +743,8 @@ ${warnBox('⚠️ 请在<b>无风环境</b>下校准（室内或完全无风的�
 <div style="margin-top:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
 <button class="btn btn-next btn-sm" id="btnAsCal">📡 校准空速计零点</button>
 <span id="asCalMsg" style="font-size:13px;color:var(--dim)"></span></div>
-<p class="note">校准将测量当前静压作为零点（更新 ARSPD_OFFSET）。校准结果以飞控应答为准。</p></div>
+<p class="note">该指令将同时校准<b>气压计</b>与<b>空速计零点</b>（ArduPilot 定义：PREFLIGHT_CALIBRATION param3=1）。需在上锁状态下执行。</p>
+<div class="logbox" id="asCalLog" style="max-height:110px;margin-top:10px"></div></div>
 <div class="card"><h3>机头罩类型</h3>
 <div class="grid2" id="noseOpts">
 <div class="opt" data-nose="std"><h4>📦 默认机头罩</h4><p>出厂标配，无需任何设置，保持当前参数。</p><span class="tag">推荐新手</span></div>
@@ -1063,18 +1064,21 @@ function bindStep(i){
     const updAs=()=>{ const el=$('asLive'); if(el) el.textContent=FC.hud.as.toFixed(1); };
     onFc('hud',updAs); updAs();
     const ACKN=['已接受','临时拒绝','被拒绝','不支持','失败','执行中','已取消'];
+    const asLogPaint=()=>{ const el=$('asCalLog'); if(el) el.innerHTML=FC.msgs.slice(-6).map(m=>`<div class="${m.sev<=3?'err':m.sev===4?'warn':'ok'}">[${new Date(m.t).toLocaleTimeString()}] ${String(m.text).replace(/</g,'&lt;')}</div>`).join(''); };
+    onFc('msg',asLogPaint); asLogPaint();
     $('btnAsCal').onclick=()=>{
       if(typeof FC._send!=='function'){ $('asCalMsg').innerHTML='<span style="color:var(--amber)">⚠️ 演示模式无此功能，请连接真机</span>'; return; }
+      if(FC.armed){ $('asCalMsg').innerHTML='<span style="color:var(--red)">⚠️ 请先上锁（Disarm）后再校准</span>'; return; }
       $('btnAsCal').disabled=true; $('asCalMsg').textContent='校准指令已发送，等待飞控应答…';
       const to=setTimeout(()=>{ FC.off('ack',onAck); $('btnAsCal').disabled=false;
-        $('asCalMsg').innerHTML='<span style="color:var(--amber)">⚠️ 未收到飞控应答，请确认连接正常</span>'; },6000);
+        $('asCalMsg').innerHTML='<span style="color:var(--amber)">⚠️ 未收到飞控应答，请确认连接正常</span>'; },8000);
       const onAck=()=>{ const a=FC.lastAck; if(!a||a.cmd!==241) return;
         clearTimeout(to); FC.off('ack',onAck); $('btnAsCal').disabled=false;
-        $('asCalMsg').innerHTML = a.res===0
-          ? '<span style="color:var(--green)">✓ 飞控已接受，空速计零点校准完成</span>'
-          : `<span style="color:var(--red)">⚠️ 飞控应答：${ACKN[a.res]||('代码'+a.res)}</span>`; };
+        if(a.res===0) $('asCalMsg').innerHTML='<span style="color:var(--green)">✓ 飞控已接受，校准完成</span>';
+        else if(a.res===5) $('asCalMsg').innerHTML='<span style="color:var(--green)">✓ 校准进行中…完成后飞控会发消息（见下方）</span>';
+        else $('asCalMsg').innerHTML=`<span style="color:var(--red)">⚠️ 飞控应答：${ACKN[a.res]||('代码'+a.res)}</span>`; };
       FC.on('ack',onAck);
-      try{ FC._send(encCommandLong(241,0,0,0,0,0,0,1)); }
+      try{ FC._send(encCommandLong(241,0,0,1,0,0,0,0)); }
       catch(e){ clearTimeout(to); FC.off('ack',onAck); $('btnAsCal').disabled=false; $('asCalMsg').textContent='发送失败：'+e.message; }
     };
     $('btnArspd').onclick=async()=>{
