@@ -196,11 +196,11 @@ table.map td.mp{color:var(--dim)} table.map td.wz{color:var(--cyan)}
 .ac-xfade{position:relative;width:170px;flex:none}
 .ac-xfade img{width:100%;display:block}
 .ac-xfade .xf-b{position:absolute;inset:0}
-.xf-a{animation:xfadeA 4.4s ease-in-out infinite}
-.xf-b{animation:xfadeB 4.4s ease-in-out infinite}
+.xf-a{animation:xfadeA 3.2s ease-in-out infinite}
+.xf-b{animation:xfadeB 3.2s ease-in-out infinite}
 .ac-slide{width:170px;flex:none;animation:acClimbImg 3.2s ease-in-out infinite}
-@keyframes xfadeA{0%,42%{opacity:1}58%,100%{opacity:0}}
-@keyframes xfadeB{0%,42%{opacity:0}58%,100%{opacity:1}}
+@keyframes xfadeA{0%,45%{opacity:1}55%,100%{opacity:0}}
+@keyframes xfadeB{0%,45%{opacity:0}55%,100%{opacity:1}}
 @keyframes acClimbImg{0%,100%{transform:translateY(0)}25%{transform:translateY(-12px)}75%{transform:translateY(12px)}}
 .anim-cap{text-align:center;font-size:11px;color:var(--dim);margin-top:6px}
 .ax-x .mdot{animation:stickX 3.2s ease-in-out infinite}
@@ -212,6 +212,11 @@ table.map td.mp{color:var(--dim)} table.map td.wz{color:var(--cyan)}
 .seg-btn{flex:1;padding:10px;border-radius:10px;border:1px solid var(--line2);background:#0a1220;color:var(--dim);font-size:14px;cursor:pointer}
 .seg-btn.sel{background:rgba(34,211,238,.15);border-color:var(--cyan);color:var(--cyan);font-weight:700}
 .ac-slide-x{width:170px;flex:none;animation:acSlideX 3.2s ease-in-out infinite}
+.state-pair{display:flex;align-items:center;justify-content:center;gap:14px;margin:8px 0;padding:10px 6px;background:rgba(255,255,255,.025);border-radius:10px}
+.state{text-align:center;flex:none}
+.state-arrow{font-size:22px;color:var(--cyan);flex:none}
+.ac-static{width:150px;flex:none}
+.mini-gimbal.static .mdot{animation:none}
 @keyframes acSlideX{0%,100%{transform:translateX(0)}25%{transform:translateX(14px)}75%{transform:translateX(-14px)}}
 </style>
 </head>
@@ -612,8 +617,8 @@ onMsg(77,(p)=>{                   /* COMMAND_ACK：command u16, result u8 */
 /* ================= 向导 UI ================= */
 const S = { step:0, done:new Set(), calibrated:false, modesDone:false,
   battDone:false, arspdDone:false, armOk:false, modeOk:false,
-  modeRead:false, vtxDone:false };
-const TOTAL = 10;
+  modeRead:false, };
+const TOTAL = 9;
 const STEPS = [
   {t:'开箱与接线检查', s:'ELRS / 图传 / 云台接线', ref:'P2–4'},
   {t:'连接飞控', s:'USB 直连 · 下载参数', ref:'P5'},
@@ -623,10 +628,9 @@ const STEPS = [
   {t:'飞行模式设置', s:'CH6 三档开关', ref:'P7–8'},
   {t:'解锁上锁练习与模式确认', s:'手势练习 · 模式语音确认', ref:'P14–16'},
   {t:'遥控器操控说明', s:'VTOL 与固定翼杆量', ref:'P22–25'},
-  {t:'图传与云台', s:'OSD · DJI / C20-T', ref:'P27–33'},
-  {t:'起飞前检查', s:'实时遥测 · 放飞', ref:'—'},
+  {t:'起飞前检查', s:'放飞检查单', ref:'—'},
 ];
-const SKIPPABLE = new Set([0,2,3,4,5,9]);
+const SKIPPABLE = new Set([0,2,3,4,5,8]);
 let maxReached = 0, cleaners = [];
 const later = fn => cleaners.push(fn);
 const onFc = (e,f) => { FC.on(e,f); later(()=>FC.off(e,f)); };
@@ -641,14 +645,13 @@ const canNext = [
   ()=>S.modesDone,
   ()=>S.armOk&&S.disOk&&S.modeOk&&S.modeRead,
   ()=>true,
-  ()=>S.vtxDone,
   ()=>true,
 ];
 const HINTS = [
   '','请先连接飞控并等待参数下载完成','请完成遥控器校准（或跳过）',
   '请选择机头罩类型并写入（或跳过）','请写入电池容量（或跳过）',
   '请写入飞行模式（或跳过）','请学习飞行模式、完成解锁/上锁练习并确认设置',
-  '了解杆量差异后继续','请选择图传类型并写入（或跳过）','全部勾选后即可放飞 🎉',
+  '了解杆量差异后继续','全部勾选后即可放飞 🎉',
 ];
 const warnBox=(h,amber)=>`<div class="warn-strip${amber?' amber':''}">${h}</div>`;
 const checkItem=(id,title,desc)=>`<label class="check" data-cid="${id}"><input type="checkbox" data-cid="${id}"><span class="t"><b>${title}</b><span>${desc}</span></span></label>`;
@@ -883,95 +886,57 @@ R[7]=()=>`
 <div class="kv"><span>CH1 横滚</span><b>压杆转弯</b></div>
 <div class="kv"><span>CH4 方向</span><b>协调转弯 / 地面转向</b></div></div>
 ${warnBox('⚠️ <b>CRUISE 不适合贴地飞行</b>：爬升/下降率被限制在 2m/s，低空没有足够的俯仰机动余量避障。',true)}</div>
-<div class="card"><h3>摇杆动作演示 <span style="font-size:11px;color:var(--dim2)">说明书 P16–23 · 循环播放</span></h3>
-<p class="note">VTOL 和固定翼是两套杆量，用下面按钮切换。左边摇杆动，右边飞机跟着响应。飞机图片截取自官方说明书（VTOL：P16–19；固定翼：P20–23）。</p>
+<div class="card"><h3>摇杆动作演示 <span style="font-size:11px;color:var(--dim2)">说明书 P16–23</span></h3>
+<p class="note">VTOL 和固定翼是两套杆量，用下面按钮切换。左右两列对照：摇杆打到哪边，飞机就往哪边动。飞机图片截取自官方说明书（VTOL：P16–19；固定翼：P20–23）。</p>
 <div class="seg-toggle"><button class="seg-btn sel" id="animModeVtol">VTOL 模式</button><button class="seg-btn" id="animModeFw">固定翼模式</button></div>
 <div class="anim-grid" id="animGridVtol">
 <div class="anim-card"><h4>CH1 · 横滚</h4>
-<div class="anim-stage">
-<div><div class="mini-gimbal ax-x"><div class="mdot"></div></div><div class="anim-cap">右摇杆 · 左右</div></div>
-<div><div class="ac-xfade"><img class="xf-a" src="${VT1A}" alt="俯视左右平移"><img class="xf-b" src="${VT1B}" alt="俯视左右平移"></div><div class="anim-cap">俯视 · 左右平移</div></div>
-</div>
+<div class="state-pair"><div class="state"><div class="mini-gimbal static"><div class="mdot" style="left:18%;top:50%"></div></div><div class="anim-cap">右摇杆 → 左</div></div><div class="state-arrow">→</div><div class="state"><img class="ac-static" src="${VT1B}"><div class="anim-cap">俯视 · 左平移</div></div></div>
+<div class="state-pair"><div class="state"><div class="mini-gimbal static"><div class="mdot" style="left:82%;top:50%"></div></div><div class="anim-cap">右摇杆 → 右</div></div><div class="state-arrow">→</div><div class="state"><img class="ac-static" src="${VT1A}"><div class="anim-cap">俯视 · 右平移</div></div></div>
 <p class="note">左右平移（推荐转向）</p></div>
 <div class="anim-card"><h4>CH2 · 俯仰</h4>
-<div class="anim-stage">
-<div><div class="mini-gimbal ax-y"><div class="mdot"></div></div><div class="anim-cap">右摇杆 · 上下</div></div>
-<div><div class="ac-xfade"><img class="xf-a" src="${VT2A}" alt="侧视前后平移"><img class="xf-b" src="${VT2B}" alt="侧视前后平移"></div><div class="anim-cap">侧视 · 前进 / 后退</div></div>
-</div>
-<p class="note">前进 / 后退</p></div>
+<div class="state-pair"><div class="state"><div class="mini-gimbal static"><div class="mdot" style="left:50%;top:18%"></div></div><div class="anim-cap">右摇杆 → 上</div></div><div class="state-arrow">→</div><div class="state"><img class="ac-static" src="${VT2B}"><div class="anim-cap">侧视 · 后退</div></div></div>
+<div class="state-pair"><div class="state"><div class="mini-gimbal static"><div class="mdot" style="left:50%;top:82%"></div></div><div class="anim-cap">右摇杆 → 下</div></div><div class="state-arrow">→</div><div class="state"><img class="ac-static" src="${VT2A}"><div class="anim-cap">侧视 · 前进</div></div></div>
+<p class="note">前进 / 后退（推杆前进，拉杆后退）</p></div>
 <div class="anim-card"><h4>CH3 · 油门</h4>
-<div class="anim-stage">
-<div><div class="mini-gimbal ax-y"><div class="mdot"></div></div><div class="anim-cap">左摇杆 · 上下</div></div>
-<div><div class="ac-xfade"><img class="xf-a" src="${VT3A}" alt="侧视上升下降"><img class="xf-b" src="${VT3B}" alt="侧视上升下降"></div><div class="anim-cap">侧视 · 上升 / 下降</div></div>
-</div>
+<div class="state-pair"><div class="state"><div class="mini-gimbal static"><div class="mdot" style="left:50%;top:18%"></div></div><div class="anim-cap">左摇杆 → 上</div></div><div class="state-arrow">→</div><div class="state"><img class="ac-static" src="${VT3A}"><div class="anim-cap">侧视 · 上升</div></div></div>
+<div class="state-pair"><div class="state"><div class="mini-gimbal static"><div class="mdot" style="left:50%;top:82%"></div></div><div class="anim-cap">左摇杆 → 下</div></div><div class="state-arrow">→</div><div class="state"><img class="ac-static" src="${VT3B}"><div class="anim-cap">侧视 · 下降</div></div></div>
 <p class="note">上升 / 下降</p></div>
 <div class="anim-card"><h4>CH4 · 方向</h4>
-<div class="anim-stage">
-<div><div class="mini-gimbal ax-x"><div class="mdot"></div></div><div class="anim-cap">左摇杆 · 左右</div></div>
-<div><div class="ac-xfade"><img class="xf-a" src="${VT4A}" alt="俯视水平旋转"><img class="xf-b" src="${VT4B}" alt="俯视水平旋转"></div><div class="anim-cap">俯视 · 水平旋转</div></div>
-</div>
+<div class="state-pair"><div class="state"><div class="mini-gimbal static"><div class="mdot" style="left:18%;top:50%"></div></div><div class="anim-cap">左摇杆 → 左</div></div><div class="state-arrow">→</div><div class="state"><img class="ac-static" src="${VT4B}"><div class="anim-cap">俯视 · 逆时针旋转</div></div></div>
+<div class="state-pair"><div class="state"><div class="mini-gimbal static"><div class="mdot" style="left:82%;top:50%"></div></div><div class="anim-cap">左摇杆 → 右</div></div><div class="state-arrow">→</div><div class="state"><img class="ac-static" src="${VT4A}"><div class="anim-cap">俯视 · 顺时针旋转</div></div></div>
 <p class="note">水平旋转（左右桨差速）；转向优先用 CH1</p></div>
-</div>
-<div class="anim-grid" id="animGridFw" style="display:none">
+</div><div class="anim-grid" id="animGridFw" style="display:none">
 <div class="anim-card"><h4>CH1 · 横滚</h4>
-<div class="anim-stage">
-<div><div class="mini-gimbal ax-x"><div class="mdot"></div></div><div class="anim-cap">右摇杆 · 左右</div></div>
-<div><div class="ac-xfade"><img class="xf-a" src="${AC_CH1_A}" alt="压坡"><img class="xf-b" src="${AC_CH1_B}" alt="压坡"></div><div class="anim-cap">压坡转弯</div></div>
-</div>
+<div class="state-pair"><div class="state"><div class="mini-gimbal static"><div class="mdot" style="left:18%;top:50%"></div></div><div class="anim-cap">右摇杆 → 左</div></div><div class="state-arrow">→</div><div class="state"><img class="ac-static" src="${AC_CH1_B}"><div class="anim-cap">压坡左转</div></div></div>
+<div class="state-pair"><div class="state"><div class="mini-gimbal static"><div class="mdot" style="left:82%;top:50%"></div></div><div class="anim-cap">右摇杆 → 右</div></div><div class="state-arrow">→</div><div class="state"><img class="ac-static" src="${AC_CH1_A}"><div class="anim-cap">压坡右转</div></div></div>
 <p class="note">压杆转弯</p></div>
 <div class="anim-card"><h4>CH2 · 俯仰</h4>
-<div class="anim-stage">
-<div><div class="mini-gimbal ax-y"><div class="mdot"></div></div><div class="anim-cap">右摇杆 · 上下</div></div>
-<div><div class="ac-xfade"><img class="xf-a" src="${AC_CH2_A}" alt="俯仰"><img class="xf-b" src="${AC_CH2_B}" alt="俯仰"></div><div class="anim-cap">抬头 / 低头</div></div>
-</div>
-<p class="note"><b>拉杆（↓）</b>抬头爬升 / <b>推杆（↑）</b>低头下降<br>CRUISE 升降率限 2m/s，FBWA 俯仰角限 ±20°</p></div>
+<div class="state-pair"><div class="state"><div class="mini-gimbal static"><div class="mdot" style="left:50%;top:18%"></div></div><div class="anim-cap">右摇杆 → 上（推）</div></div><div class="state-arrow">→</div><div class="state"><img class="ac-static" src="${AC_CH2_B}"><div class="anim-cap">低头下降</div></div></div>
+<div class="state-pair"><div class="state"><div class="mini-gimbal static"><div class="mdot" style="left:50%;top:82%"></div></div><div class="anim-cap">右摇杆 → 下（拉）</div></div><div class="state-arrow">→</div><div class="state"><img class="ac-static" src="${AC_CH2_A}"><div class="anim-cap">抬头爬升</div></div></div>
+<p class="note">拉杆（↓）抬头爬升 / 推杆（↑）低头下降；CRUISE 升降率限 2m/s，FBWA 俯仰角限 ±20°</p></div>
 <div class="anim-card"><h4>CH3 · 油门</h4>
-<div class="anim-stage">
-<div><div class="mini-gimbal ax-y"><div class="mdot"></div></div><div class="anim-cap">左摇杆 · 上下</div></div>
-<div><img class="ac-slide-x" src="${AC_CH3}" alt="侧视巡航"><div class="anim-cap">侧视 · 平飞巡航</div></div>
-</div>
+<div class="state-pair"><div class="state"><div class="mini-gimbal static"><div class="mdot" style="left:50%;top:18%"></div></div><div class="anim-cap">左摇杆 → 上</div></div><div class="state-arrow">→</div><div class="state"><img class="ac-static" src="${AC_CH3}"><div class="anim-cap">侧视 · 加速</div></div></div>
+<div class="state-pair"><div class="state"><div class="mini-gimbal static"><div class="mdot" style="left:50%;top:82%"></div></div><div class="anim-cap">左摇杆 → 下</div></div><div class="state-arrow">→</div><div class="state"><img class="ac-static" src="${AC_CH3}"><div class="anim-cap">侧视 · 减速</div></div></div>
 <p class="note">管空速——CRUISE 中 16 / 大 24 / 小 14 m/s；FBWA 手动 0–44m/s（低于 12m/s 自动 VTOL 辅助）</p></div>
 <div class="anim-card"><h4>CH4 · 方向</h4>
-<div class="anim-stage">
-<div><div class="mini-gimbal ax-x"><div class="mdot"></div></div><div class="anim-cap">左摇杆 · 左右</div></div>
-<div><div class="ac-xfade"><img class="xf-a" src="${AC_CH4_A}" alt="偏航"><img class="xf-b" src="${AC_CH4_B}" alt="偏航"></div><div class="anim-cap">方向舵偏航</div></div>
-</div>
+<div class="state-pair"><div class="state"><div class="mini-gimbal static"><div class="mdot" style="left:18%;top:50%"></div></div><div class="anim-cap">左摇杆 → 左</div></div><div class="state-arrow">→</div><div class="state"><img class="ac-static" src="${AC_CH4_A}"><div class="anim-cap">偏航左</div></div></div>
+<div class="state-pair"><div class="state"><div class="mini-gimbal static"><div class="mdot" style="left:82%;top:50%"></div></div><div class="anim-cap">左摇杆 → 右</div></div><div class="state-arrow">→</div><div class="state"><img class="ac-static" src="${AC_CH4_B}"><div class="anim-cap">偏航右</div></div></div>
 <p class="note">偏航修正（协调转弯）/ 地面转向</p></div>
 </div>
 </div>`;
 
 /* ---- 9 图传OSD ---- */
-R[8]=()=>`
-<div class="step-hero"><div class="step-no">09</div><div><h2>图传与云台 <span class="ref">说明书 P27–33</span></h2>
-<p>按图传类型写入 <b style="color:var(--cyan)">MSP_OPTIONS</b>，保证 DJI OSD 字符正常显示。云台通道请参照云台说明书设置。</p></div></div>
-<div class="card"><h3>当前值</h3><div class="kv"><span>MSP_OPTIONS</span><b id="mspCur">–</b></div></div>
-<div class="card"><h3>图传类型</h3>
-<div class="grid3" id="vtxOpts">
-<div class="opt" data-vtx="dji"><h4>📡 DJI O3 / O4</h4><p>MSP_OPTIONS = <b>4 或 12</b>。固件高于 4.6.3 时，眼镜端机型请选 <b>INAV</b> 而非 BF。</p></div>
-<div class="opt" data-vtx="ws"><h4>📺 Walksnail / 模拟</h4><p>AV 线接入图传，OSD 位置需手动配置；MSP_OPTIONS 保持 0。</p></div>
-<div class="opt" data-vtx="c20t"><h4>🎥 C20-T 云台</h4><p>飞控已预配置 MAVLink 透传；云台通道映射请参照 C20-T 说明书。</p></div>
-</div>
-<div style="margin-top:14px"><label class="f">MSP_OPTIONS 取值（DJI 用户）</label>
-<select class="inp" id="mspSel" style="max-width:280px"><option value="4">4</option><option value="12">12</option></select></div>
-<div style="margin-top:14px;display:flex;gap:12px;align-items:center">
-<button class="btn btn-next btn-sm" id="btnVtx">💾 写入飞控</button>
-<span id="vtxMsg" style="font-size:13px;color:var(--dim)"></span></div></div>`;
+
 
 /* ---- 10 起飞前检查 ---- */
-R[9]=()=>`
-<div class="step-hero"><div class="step-no">10</div><div><h2>起飞前检查</h2>
+R[8]=()=>`
+<div class="step-hero"><div class="step-no">09</div><div><h2>起飞前检查</h2>
 <p>最后一遍确认，全部通过即可放飞。建议每次飞行前都走一遍本页。</p></div></div>
-<div class="card"><h3>实时遥测</h3>
-<div class="grid4">
-<div class="tile"><div class="v" id="tVolt">–</div><div class="k">电池电压 V</div></div>
-<div class="tile"><div class="v" id="tGps">–</div><div class="k">GPS 搜星</div></div>
-<div class="tile"><div class="v" id="tMode">–</div><div class="k">飞行模式</div></div>
-<div class="tile"><div class="v" id="tArm">–</div><div class="k">解锁状态</div></div>
-</div></div>
 <div class="card"><h3>放飞检查单</h3><div id="finalList">
 ${checkItem('f1','电池已接好、电量充足，6S 软包','电压正常，无鼓包破损。')}
 ${checkItem('f2','重心确认无误','CG 在刻痕处（机头方向 ≤1cm）。')}
-${checkItem('f3','遥控器已校准，CH6 三档 = QLOITER / CRUISE / RTL','上电默认 QLOITER。')}
+${checkItem('f3','遥控器已校准，CH6 三档 = QLOITER / FBWA / RTL','上电默认 QLOITER。')}
 ${checkItem('f4','预热完成，尾灯绿色','上电后静置约 1 分钟，期间未移动飞机。')}
 ${checkItem('f5','GPS 已定位（室外）','等待搜星完成再解锁。')}
 ${checkItem('f6','解锁手势熟练：油门最低 + 方向右 5 秒','桨转后方向回中，白灯闪烁。')}
@@ -1358,38 +1323,6 @@ function bindStep(i){
 }
 
 if(i===8){
-    $('mspCur').textContent=pvi('MSP_OPTIONS')??'–';
-    let sel='dji';
-    document.querySelectorAll('#vtxOpts .opt').forEach(o=>{
-      o.onclick=()=>{
-        document.querySelectorAll('#vtxOpts .opt').forEach(x=>x.classList.remove('sel'));
-        o.classList.add('sel'); sel=o.dataset.vtx; S.vtxDone=false; $('vtxMsg').textContent='';
-        $('btnNext').disabled=true; $('navHint').textContent=HINTS[9];
-      };
-    });
-    document.querySelector('#vtxOpts .opt').click();
-    $('btnVtx').onclick=async()=>{
-      $('btnVtx').disabled=true; $('vtxMsg').textContent='写入中…';
-      try{
-        if(sel==='dji') await FC.setParam('MSP_OPTIONS',+$('mspSel').value);
-        else if(sel==='ws') await FC.setParam('MSP_OPTIONS',0);
-        S.vtxDone=true;
-        $('vtxMsg').innerHTML='<span style="color:var(--green)">✓ 已写入飞控</span>';
-        $('btnNext').disabled=false; $('navHint').textContent='';
-      }catch(e){ $('vtxMsg').innerHTML=`<span style="color:var(--red)">⚠️ ${String(e.message).replace(/</g,'&lt;')}</span>`; }
-      $('btnVtx').disabled=false;
-    };
-  }
-
-  if(i===9){
-    const upd=()=>{
-      const t=$('tVolt'); if(!t) return;
-      t.textContent=FC.voltage.toFixed(1);
-      const g=$('tGps'); g.textContent=FC.sats+'颗'; g.className='v '+(FC.gpsFix>=3?'ok':'warnv');
-      $('tMode').textContent=modeName(FC.modeNum); $('tMode').style.fontSize='14px';
-      const a=$('tArm'); a.textContent=FC.armed?'已解锁':'已上锁'; a.className='v '+(FC.armed?'bad':'ok');
-    };
-    onFc('telemetry',upd); onFc('heartbeat',upd); every(1000,upd); upd();
     const all=[...document.querySelectorAll('#finalList input')];
     const box=$('finishBox');
     const refresh=()=>{
