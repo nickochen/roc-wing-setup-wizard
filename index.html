@@ -20,15 +20,17 @@
 html,body{height:100%}
 body{font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;
   background:var(--bg);color:var(--txt);overflow:hidden;font-size:14px;
-  background-image:radial-gradient(1000px 600px at 15% 0%,rgba(74,158,255,.10),transparent 60%),
-  radial-gradient(800px 600px at 90% 20%,rgba(167,139,250,.07),transparent 60%),
-  radial-gradient(900px 700px at 85% 100%,rgba(251,146,60,.08),transparent 60%),
-  radial-gradient(700px 500px at 10% 100%,rgba(74,158,255,.05),transparent 60%);
+  background-image:
+  radial-gradient(1100px 700px at 12% -5%,rgba(74,158,255,.16),transparent 65%),
+  radial-gradient(900px 700px at 88% 15%,rgba(139,92,246,.12),transparent 65%),
+  radial-gradient(1000px 800px at 88% 105%,rgba(251,146,60,.14),transparent 65%),
+  radial-gradient(800px 600px at 5% 105%,rgba(74,158,255,.08),transparent 65%),
+  radial-gradient(600px 400px at 50% 50%,rgba(139,92,246,.04),transparent 70%);
   background-size:auto,auto,44px 44px,44px 44px}
 ::-webkit-scrollbar{width:8px;height:8px}
 ::-webkit-scrollbar-thumb{background:rgba(74,158,255,.25);border-radius:4px}
 .topbar{height:60px;display:flex;align-items:center;gap:14px;padding:0 18px;
-  background:rgba(10,10,14,.55);backdrop-filter:var(--glass);-webkit-backdrop-filter:var(--glass);border-bottom:1px solid var(--line);position:relative;z-index:10}
+  background:rgba(8,8,12,.42);backdrop-filter:blur(28px) saturate(1.4);-webkit-backdrop-filter:blur(28px) saturate(1.4);border-bottom:1px solid rgba(255,255,255,.07);position:relative;z-index:10}
 .logo{width:36px;height:36px;border-radius:10px;flex:none;box-shadow:var(--glow-c);overflow:hidden}
 .title h1{font-size:16px;letter-spacing:1px;font-weight:700}
 .title h1 .sub{color:var(--cyan)}
@@ -47,7 +49,7 @@ body{font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-s
 .progress-bar i{display:block;height:100%;width:0;border-radius:3px;
   background:linear-gradient(90deg,var(--cyan-d),var(--cyan));box-shadow:var(--glow-c);transition:width .5s ease}
 .layout{display:flex;height:calc(100vh - 60px)}
-.rail{width:264px;flex:none;background:rgba(11,18,32,.85);border-right:1px solid var(--line);
+.rail{width:248px;flex:none;background:rgba(8,8,12,.42);backdrop-filter:blur(28px) saturate(1.4);-webkit-backdrop-filter:blur(28px) saturate(1.4);border-right:1px solid rgba(255,255,255,.07);
   padding:16px 12px;overflow-y:auto;display:flex;flex-direction:column}
 .rail-head{font-size:11px;color:var(--dim2);letter-spacing:2px;padding:0 8px 10px}
 .rail-foot{margin-top:auto;padding:12px 8px 0;font-size:11px;color:var(--dim2);line-height:1.8;border-top:1px solid var(--line)}
@@ -77,8 +79,8 @@ body{font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-s
   border:1px solid rgba(248,113,113,.4);background:rgba(248,113,113,.07);color:#fecaca}
 .warn-strip.amber{border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.06);color:#fde68a}
 .warn-strip b{color:#fff}
-.card{background:var(--panel);backdrop-filter:var(--glass);-webkit-backdrop-filter:var(--glass);border:1px solid var(--line);
-  border-radius:18px;padding:20px;margin-bottom:16px;box-shadow:0 8px 32px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.06)}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.018));backdrop-filter:blur(28px) saturate(1.4);-webkit-backdrop-filter:blur(28px) saturate(1.4);border:1px solid rgba(255,255,255,.10);
+  border-radius:22px;padding:22px;margin-bottom:18px;box-shadow:0 12px 40px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.12),inset 0 -1px 0 rgba(0,0,0,.2)}
 .card h3{font-size:14px;letter-spacing:1px;margin-bottom:14px;color:var(--cyan);display:flex;align-items:center;gap:8px}
 .card h3::before{content:"";width:3px;height:14px;border-radius:2px;background:var(--cyan);box-shadow:var(--glow-c)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
