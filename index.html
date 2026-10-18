@@ -569,6 +569,7 @@ onMsg(22,(p)=>{                   /* PARAM_VALUE：value, count, index, id[16], 
 onMsg(65,(p)=>{                   /* RC_CHANNELS：time u32, chan1-18 u16, chancount, rssi */
   const dv=dvOf(p);
   for(let i=0;i<18;i++){ const v=U16(dv,4+i*2); if(v>=900&&v<=2100) FC.rc[i]=v; }
+  FC._rcLastT=Date.now();
   FC.emit('rc',{});
 });
 onMsg(1,(p)=>{                    /* SYS_STATUS */
@@ -825,6 +826,7 @@ R[6]=()=>`
 <div class="dot" id="dotR"></div></div>
 </div>
 <div id="gestMsg" style="text-align:center;font-size:14px;margin:10px 0;color:var(--dim)">把左摇杆推到<b style="color:var(--green)">右下角</b>保持 2 秒，或点击演示观看</div>
+<div id="rcDbg" style="text-align:center;font-size:11px;color:var(--dim2);margin-top:6px"></div>
 <div style="text-align:center;display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><button class="btn btn-prev btn-sm" id="btnGestDemo">▶ 演示解锁/上锁手势</button>
 <button class="btn btn-next btn-sm" id="btnArmOk">✓ 已完成解锁/上锁练习</button></div>
 </div>
@@ -1246,11 +1248,11 @@ function bindStep(i){
       else if(S.disOk){ b.textContent='✓ 上锁已练，还差解锁'; }
     };
     const armDone=(how)=>{
-      if(S.armOk) return; S.armOk=true; gate(); updPracticeBtn();
+      if(!S.armOk){ S.armOk=true; gate(); updPracticeBtn(); }
       gestMsg.innerHTML=`<span style="color:var(--green)">✓ 解锁手势正确${how}</span>`;
     };
     const disDone=(how)=>{
-      if(S.disOk) return; S.disOk=true; gate(); updPracticeBtn();
+      if(!S.disOk){ S.disOk=true; gate(); updPracticeBtn(); }
       gestMsg.innerHTML=`<span style="color:var(--green)">✓ 上锁手势正确${how}</span>`;
     };
     const paint=()=>{
@@ -1265,19 +1267,30 @@ function bindStep(i){
           disT0=0;
           if(!armT0) armT0=Date.now();
           const held=(Date.now()-armT0)/1000;
-          if(!S.armOk) gestMsg.innerHTML=`保持解锁手势… <b style="color:var(--cyan)">${held.toFixed(1)}s / 2s</b>`;
           if(held>=2) armDone('（摇杆检测）');
+          else gestMsg.innerHTML=`保持解锁手势… <b style="color:var(--cyan)">${held.toFixed(1)}s / 2s</b>`+(S.armOk?' <span style="color:var(--dim2)">（已通过，可重复练习）</span>':'');
         } else if(inDis){
           armT0=0;
           if(!disT0) disT0=Date.now();
           const held=(Date.now()-disT0)/1000;
-          if(!S.disOk) gestMsg.innerHTML=`保持上锁手势… <b style="color:var(--amber)">${held.toFixed(1)}s / 2s</b>`;
           if(held>=2) disDone('（摇杆检测）');
+          else gestMsg.innerHTML=`保持上锁手势… <b style="color:var(--amber)">${held.toFixed(1)}s / 2s</b>`+(S.disOk?' <span style="color:var(--dim2)">（已通过，可重复练习）</span>':'');
         } else { armT0=0; disT0=0; }
       }
       paintMode();
     };
-    onFc('rc',paint); onFc('heartbeat',paint); every(500,paint); paint();
+    const rcDbg=$('rcDbg');
+    const updDbg=()=>{
+      if(!rcDbg) return;
+      const age=FC._rcLastT?Math.round((Date.now()-FC._rcLastT)/1000):-1;
+      const vals=[FC.rc[0],FC.rc[1],FC.rc[2],FC.rc[3]].map(v=>v||1500).join(' / ');
+      const ok=FC.demo?true:(age>=0&&age<3);
+      rcDbg.innerHTML='RC 数据：'+(FC.demo?'演示模拟中':(ok?'<span style="color:var(--green)">正常</span>':'<span style="color:var(--red)">无数据（'+(age<0?'从未收到':'上次 '+age+'s 前')+'）</span>'))
+        +' · CH1–4: '+vals
+        +((!FC.demo&&!ok)?'<br>请确认接收机已上电并对频，USB 重新插拔后回到本页':'');
+    };
+    const paintWrap=()=>{ paint(); updDbg(); };
+    onFc('rc',paintWrap); onFc('heartbeat',paintWrap); every(500,paintWrap); paintWrap();
     $('btnGestDemo').onclick=()=>{
       let t=0; demoRun=true;
       const iv=setInterval(()=>{
