@@ -207,6 +207,12 @@ table.map td.mp{color:var(--dim)} table.map td.wz{color:var(--cyan)}
 .ax-y .mdot{animation:stickY 3.2s ease-in-out infinite}
 @keyframes stickX{0%,100%{left:50%}25%{left:82%}75%{left:18%}}
 @keyframes stickY{0%,100%{top:50%}25%{top:82%}75%{top:18%}}
+
+.seg-toggle{display:flex;gap:8px;margin:10px 0}
+.seg-btn{flex:1;padding:10px;border-radius:10px;border:1px solid var(--line2);background:#0a1220;color:var(--dim);font-size:14px;cursor:pointer}
+.seg-btn.sel{background:rgba(34,211,238,.15);border-color:var(--cyan);color:var(--cyan);font-weight:700}
+.ac-slide-x{width:170px;flex:none;animation:acSlideX 3.2s ease-in-out infinite}
+@keyframes acSlideX{0%,100%{transform:translateX(0)}25%{transform:translateX(14px)}75%{transform:translateX(-14px)}}
 </style>
 </head>
 <body>
@@ -480,11 +486,19 @@ const FC = {
     if(!cur) type=(await this.getParam(name), this.params.get(name).type);
     const v = type<=8 ? Math.round(value) : value;   /* 整数类型取整，线上传输仍为 float */
     if(this.demo){ this.params.set(name,{value:v,type}); this.emit('param',{name}); return true; }
+    const eq=(a,b)=> type<=8 ? Math.abs(a-b)<0.6 : Math.abs(a-b)<Math.abs(b)*1e-4+1e-6;
     this._send(encParamSet(name, v, type));
     const echo = await this._waitParam(name, 4000).catch(()=>null);
     if(echo===null) throw new Error('写入无回执: '+name);
-    const okk = type<=8 ? Math.abs(echo-v)<0.6 : Math.abs(echo-v)<Math.abs(v)*1e-4+1e-6;
-    if(!okk) throw new Error('写入回执不符: '+name);
+    if(!eq(echo,v)){
+      /* 回显对不上：可能是串口中的陈旧消息，重新读取一次确认 */
+      this.log(4, name+' 回显不符（发送 '+v+'，回显 '+echo+'），重新读取确认…');
+      await new Promise(r=>setTimeout(r,250));
+      this._send(encParamRequestRead(name));
+      const rv = await this._waitParam(name, 4000).catch(()=>null);
+      if(rv!==null && eq(rv,v)){ this.log(6, name+' 重读一致，写入已生效'); return true; }
+      throw new Error('写入未生效: '+name+'（发送 '+v+'，飞控当前 '+(rv===null?'读取失败':rv)+'）');
+    }
     return true;
   },
   async reboot(){ if(!this.demo) this._send(encCommandLong(246,1,0,0,0,0,0,0)); this.log(4,'已发送重启指令'); },
@@ -863,33 +877,61 @@ R[8]=()=>`
 <div class="kv"><span>CH4 方向</span><b>协调转弯 / 地面转向</b></div></div>
 ${warnBox('⚠️ <b>CRUISE 不适合贴地飞行</b>：爬升/下降率被限制在 2m/s，低空没有足够的俯仰机动余量避障。',true)}</div>
 <div class="card"><h3>摇杆动作演示 <span style="font-size:11px;color:var(--dim2)">说明书 P20–23 · 循环播放</span></h3>
-<p class="note">左边摇杆动，右边飞机跟着响应。飞机图片截取自官方说明书（P20–23），两帧交叉播放。</p>
-<div class="anim-grid">
+<p class="note">VTOL 和固定翼是两套杆量，用下面按钮切换。左边摇杆动，右边飞机跟着响应。飞机图片截取自官方说明书。</p>
+<div class="seg-toggle"><button class="seg-btn sel" id="animModeVtol">VTOL 模式</button><button class="seg-btn" id="animModeFw">固定翼模式</button></div>
+<div class="anim-grid" id="animGridVtol">
 <div class="anim-card"><h4>CH1 · 横滚</h4>
 <div class="anim-stage">
 <div><div class="mini-gimbal ax-x"><div class="mdot"></div></div><div class="anim-cap">右摇杆 · 左右</div></div>
-<div><div class="ac-xfade"><img class="xf-a" src="${AC_CH1_A}" alt="右压坡"><img class="xf-b" src="${AC_CH1_B}" alt="左压坡"></div><div class="anim-cap">飞机压坡</div></div>
+<div><img class="ac-slide-x" src="${AC_CH4_A}" alt="俯视平移"><div class="anim-cap">俯视 · 左右平移</div></div>
 </div>
-<p class="note"><b>VTOL：</b>左右平移（推荐转向）<br><b>固定翼：</b>压杆转弯</p></div>
+<p class="note">左右平移（推荐转向）</p></div>
 <div class="anim-card"><h4>CH2 · 俯仰</h4>
 <div class="anim-stage">
 <div><div class="mini-gimbal ax-y"><div class="mdot"></div></div><div class="anim-cap">右摇杆 · 上下</div></div>
-<div><div class="ac-xfade"><img class="xf-a" src="${AC_CH2_A}" alt="抬头"><img class="xf-b" src="${AC_CH2_B}" alt="低头"></div><div class="anim-cap">机头俯仰（机头在左）</div></div>
+<div><img class="ac-slide-x" src="${AC_CH3}" alt="侧视前后"><div class="anim-cap">侧视 · 前进 / 后退</div></div>
+</div>
+<p class="note">前进 / 后退</p></div>
+<div class="anim-card"><h4>CH3 · 油门</h4>
+<div class="anim-stage">
+<div><div class="mini-gimbal ax-y"><div class="mdot"></div></div><div class="anim-cap">左摇杆 · 上下</div></div>
+<div><img class="ac-slide" src="${AC_CH3}" alt="侧视升降"><div class="anim-cap">侧视 · 上升 / 下降</div></div>
+</div>
+<p class="note">上升 / 下降</p></div>
+<div class="anim-card"><h4>CH4 · 方向</h4>
+<div class="anim-stage">
+<div><div class="mini-gimbal ax-x"><div class="mdot"></div></div><div class="anim-cap">左摇杆 · 左右</div></div>
+<div><div class="ac-xfade"><img class="xf-a" src="${AC_CH4_A}" alt="偏航"><img class="xf-b" src="${AC_CH4_B}" alt="偏航"></div><div class="anim-cap">俯视 · 机头左右偏转</div></div>
+</div>
+<p class="note">左右自旋（左右桨差速）；风大时响应弱，转向优先用 CH1</p></div>
+</div>
+<div class="anim-grid" id="animGridFw" style="display:none">
+<div class="anim-card"><h4>CH1 · 横滚</h4>
+<div class="anim-stage">
+<div><div class="mini-gimbal ax-x"><div class="mdot"></div></div><div class="anim-cap">右摇杆 · 左右</div></div>
+<div><div class="ac-xfade"><img class="xf-a" src="${AC_CH1_A}" alt="压坡"><img class="xf-b" src="${AC_CH1_B}" alt="压坡"></div><div class="anim-cap">压坡转弯</div></div>
+</div>
+<p class="note">压杆转弯</p></div>
+<div class="anim-card"><h4>CH2 · 俯仰</h4>
+<div class="anim-stage">
+<div><div class="mini-gimbal ax-y"><div class="mdot"></div></div><div class="anim-cap">右摇杆 · 上下</div></div>
+<div><div class="ac-xfade"><img class="xf-a" src="${AC_CH2_A}" alt="俯仰"><img class="xf-b" src="${AC_CH2_B}" alt="俯仰"></div><div class="anim-cap">抬头 / 低头</div></div>
 </div>
 <p class="note"><b>拉杆（↓）</b>抬头爬升 / <b>推杆（↑）</b>低头下降<br>CRUISE 升降率限 2m/s，FBWA 俯仰角限 ±20°</p></div>
 <div class="anim-card"><h4>CH3 · 油门</h4>
 <div class="anim-stage">
 <div><div class="mini-gimbal ax-y"><div class="mdot"></div></div><div class="anim-cap">左摇杆 · 上下</div></div>
-<div><img class="ac-slide" src="${AC_CH3}" alt="侧视"><div class="anim-cap">VTOL 上升 / 下降</div></div>
+<div><img class="ac-slide-x" src="${AC_CH3}" alt="侧视巡航"><div class="anim-cap">侧视 · 平飞巡航</div></div>
 </div>
-<p class="note"><b>固定翼：</b>管空速——CRUISE 中 16 / 大 24 / 小 14 m/s；FBWA 手动 0–44m/s（低于 12m/s 自动 VTOL 辅助）</p></div>
+<p class="note">管空速——CRUISE 中 16 / 大 24 / 小 14 m/s；FBWA 手动 0–44m/s（低于 12m/s 自动 VTOL 辅助）</p></div>
 <div class="anim-card"><h4>CH4 · 方向</h4>
 <div class="anim-stage">
 <div><div class="mini-gimbal ax-x"><div class="mdot"></div></div><div class="anim-cap">左摇杆 · 左右</div></div>
-<div><div class="ac-xfade"><img class="xf-a" src="${AC_CH4_A}" alt="偏航"><img class="xf-b" src="${AC_CH4_B}" alt="偏航"></div><div class="anim-cap">机头左右偏转</div></div>
+<div><div class="ac-xfade"><img class="xf-a" src="${AC_CH4_A}" alt="偏航"><img class="xf-b" src="${AC_CH4_B}" alt="偏航"></div><div class="anim-cap">方向舵偏航</div></div>
 </div>
-<p class="note">左右自旋（左右桨差速）；风大时响应弱，转向优先用 CH1</p></div>
-</div></div>`;
+<p class="note">偏航修正（协调转弯）/ 地面转向</p></div>
+</div>
+</div>`;
 
 /* ---- 9 图传OSD ---- */
 R[9]=()=>`
@@ -1292,7 +1334,15 @@ function bindStep(i){
       $('btnNext').disabled=false; $('navHint').textContent=''; };
   }
 
-  if(i===9){
+  if(i===8){
+  const bV=$('animModeVtol'), bF=$('animModeFw'), gV=$('animGridVtol'), gF=$('animGridFw');
+  if(bV&&bF&&gV&&gF){
+    bV.onclick=()=>{ bV.classList.add('sel'); bF.classList.remove('sel'); gV.style.display='grid'; gF.style.display='none'; };
+    bF.onclick=()=>{ bF.classList.add('sel'); bV.classList.remove('sel'); gF.style.display='grid'; gV.style.display='none'; };
+  }
+}
+
+if(i===9){
     $('mspCur').textContent=pvi('MSP_OPTIONS')??'–';
     let sel='dji';
     document.querySelectorAll('#vtxOpts .opt').forEach(o=>{
